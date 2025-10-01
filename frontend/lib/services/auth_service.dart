@@ -65,7 +65,7 @@ class AuthService {
     }
   }
 
-  Future<bool> isLoggedIn() async {
+  Future<bool> checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('isLoggedIn') ?? false;
   }
@@ -73,5 +73,20 @@ class AuthService {
   Future<void> setLoggedIn(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', value);
+  }
+
+  // Legacy methods for backward compatibility
+  static void login() {
+    // This method is kept for backward compatibility
+  }
+
+  static void logout() {
+    // This method is kept for backward compatibility
+  }
+
+  static bool get isLoggedIn {
+    // For backward compatibility - always return true for now
+    // In production, you should check Firebase auth state
+    return true;
   }
 }

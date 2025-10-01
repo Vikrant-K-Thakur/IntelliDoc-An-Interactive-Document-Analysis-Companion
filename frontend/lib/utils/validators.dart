@@ -29,6 +29,19 @@ class Validators {
     return null;
   }
 
+  static String? validateUsername(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Username is required';
+    }
+    if (value.length < 3) {
+      return 'Username must be at least 3 characters';
+    }
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
+      return 'Username can only contain letters, numbers, and underscores';
+    }
+    return null;
+  }
+
   static String? validateDocumentTitle(String? value) {
     if (value == null || value.isEmpty) {
       return 'Document title is required';
