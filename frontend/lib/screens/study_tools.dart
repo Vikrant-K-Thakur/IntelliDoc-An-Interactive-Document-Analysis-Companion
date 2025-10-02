@@ -12,9 +12,28 @@ class StudyToolsScreen extends StatefulWidget {
 }
 
 class _StudyToolsScreenState extends State<StudyToolsScreen> {
-  // Marked as final because we never change it
   final int _currentIndex = 2;
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: const StudyToolsScreenContent(),
+      bottomNavigationBar: AppBottomNavigation(
+        currentIndex: _currentIndex,
+        context: context,
+      ),
+    );
+  }
+}
+
+class StudyToolsScreenContent extends StatefulWidget {
+  const StudyToolsScreenContent({super.key});
+
+  @override
+  State<StudyToolsScreenContent> createState() => _StudyToolsScreenContentState();
+}
+
+class _StudyToolsScreenContentState extends State<StudyToolsScreenContent> {
   void _checkAuthAndNavigate(String route) {
     if (!AuthService.isLoggedIn) {
       _showLoginDialog();
@@ -45,96 +64,167 @@ class _StudyToolsScreenState extends State<StudyToolsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Study Tools'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+      backgroundColor: Colors.white,
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Your Study Toolkit',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+            // Custom Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Study Tools',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined),
+                        onPressed: () {},
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/personal-space'),
+                        child: const CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.grey,
+                          backgroundImage: NetworkImage(
+                            'https://via.placeholder.com/150',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Enhance your learning with intelligent features.',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Your Study Toolkit',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Enhance your learning with intelligent features.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Tools Grid
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildToolCard(
+                            'Flashcards',
+                            'Create, review, and master concepts with AI-powered flashcards.',
+                            Icons.menu_book_outlined,
+                            Colors.blue,
+                            () => _checkAuthAndNavigate('/flashcards'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildToolCard(
+                            'Quiz Generator',
+                            'Generate quizzes from your documents in various formats.',
+                            Icons.chat_bubble_outline,
+                            Colors.blue,
+                            () => _checkAuthAndNavigate('/quiz'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildToolCard(
+                            'Study Plan',
+                            'Design personalized study plans with intelligent scheduling.',
+                            Icons.calendar_today_outlined,
+                            Colors.blue,
+                            () => _checkAuthAndNavigate('/study-plan'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildToolCard(
+                            'AI Tutor',
+                            'Get instant help and explanations from your AI study companion.',
+                            Icons.school_outlined,
+                            Colors.blue,
+                            () => _checkAuthAndNavigate('/ai-tutor'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 30),
-            _buildToolCard(
-              'Flashcards',
-              'Create, review, and master concepts with AI-powered flashcards.',
-              onTap: () => _checkAuthAndNavigate('/flashcards'),
-            ),
-            const SizedBox(height: 16),
-            _buildToolCard(
-              'Quiz Generator',
-              'Generate quizzes from your documents in various formats.',
-              onTap: () => _checkAuthAndNavigate('/quiz'),
-            ),
-            const SizedBox(height: 24),
-            const Divider(thickness: 1),
-            const SizedBox(height: 24),
-            _buildToolCard(
-              'Study Plan',
-              'Design personalized study plans with intelligent scheduling.',
-              onTap: () => _checkAuthAndNavigate('/study-plan'),
-            ),
-            const SizedBox(height: 16),
-            _buildToolCard(
-              'AI Tutor',
-              'Get instant help and explanations from your AI study companion.',
-              onTap: () => _checkAuthAndNavigate('/ai-tutor'),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: AppBottomNavigation(
-        currentIndex: _currentIndex,
-        context: context,
-      ),
     );
   }
 
-  Widget _buildToolCard(String title, String description, {VoidCallback? onTap}) {
-    return InkWell(
+  Widget _buildToolCard(String title, String description, IconData icon, Color iconColor, VoidCallback onTap) {
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
-          borderRadius: BorderRadius.circular(8),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Icon(icon, size: 32, color: iconColor),
+            const SizedBox(height: 16),
             Text(
               title,
               style: const TextStyle(
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
+                color: Colors.black,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               description,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                height: 1.4,
               ),
             ),
           ],

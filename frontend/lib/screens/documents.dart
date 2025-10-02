@@ -12,8 +12,28 @@ class DocumentsScreen extends StatefulWidget {
 }
 
 class _DocumentsScreenState extends State<DocumentsScreen> {
-  int _currentIndex = 1;
+  final int _currentIndex = 1;
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: const DocumentsScreenContent(),
+      bottomNavigationBar: AppBottomNavigation(
+        currentIndex: _currentIndex,
+        context: context,
+      ),
+    );
+  }
+}
+
+class DocumentsScreenContent extends StatefulWidget {
+  const DocumentsScreenContent({super.key});
+
+  @override
+  State<DocumentsScreenContent> createState() => _DocumentsScreenContentState();
+}
+
+class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
   void _checkAuthAndNavigate(String route) {
     if (!AuthService.isLoggedIn) {
       _showLoginDialog();
@@ -44,194 +64,310 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          '# Documents',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      backgroundColor: Colors.white,
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Search documents...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              ),
-            ),
-            const SizedBox(height: 30),
-            const Text(
-              'Upload Documents',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Drag & drop files or click to upload PDF, Word, PPT, Scanned Images.',
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              height: 120,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.withOpacity(0.5)),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+            // Custom Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.cloud_upload, size: 40, color: Colors.grey),
-                  SizedBox(height: 8),
-                  Text(
-                    'Drag & Drop Your Files Here',
-                    style: TextStyle(fontSize: 14),
+                  const Text(
+                    'Documents',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Max file size: 25MB',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined),
+                        onPressed: () {},
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/personal-space'),
+                        child: const CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.grey,
+                          backgroundImage: NetworkImage(
+                            'https://via.placeholder.com/150',
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 15),
-            Container(
-              height: 1,
-              color: Colors.grey.withOpacity(0.3),
-            ),
-            const SizedBox(height: 15),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                ),
-                child: const Text(
-                  'Choose Files',
-                  style: TextStyle(fontSize: 16),
+
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Search Bar
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search documents...',
+                        hintStyle: TextStyle(color: Colors.grey[400]),
+                        prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Upload Section
+                    const Text(
+                      'Upload Documents',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Drag & drop files or click to upload PDF, Word, PPT, Scanned Images.',
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Upload Area
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.blue[200]!, width: 2, style: BorderStyle.solid),
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.blue[50],
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.upload_file, size: 48, color: Colors.blue[400]),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Drag & Drop Your Files Here',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Max file size: 25MB',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Choose Files Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.insert_drive_file, size: 18, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text(
+                              'Choose Files',
+                              style: TextStyle(fontSize: 15, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Your Documents
+                    const Text(
+                      'Your Documents',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Sort and Filter
+                    Row(
+                      children: [
+                        _buildFilterButton('Sort By', Icons.sort),
+                        const SizedBox(width: 10),
+                        _buildFilterButton('Filter', Icons.filter_list),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Document Categories
+                    _buildFolderItem('Research Papers', '12 Documents', Icons.folder_open),
+                    const SizedBox(height: 12),
+                    _buildFolderItem('Course Materials', '8 Documents', Icons.folder_open),
+                    const SizedBox(height: 20),
+
+                    // Document Items
+                    _buildDocumentItem('Quantum Physics Fundamen', 'PDF • Jan 15, 2024', Icons.picture_as_pdf),
+                    const SizedBox(height: 12),
+                    _buildDocumentItem('Machine Learning Algorithm', 'PPT • Feb 20, 2024', Icons.slideshow),
+                    const SizedBox(height: 12),
+                    _buildDocumentItem('Historical Events Timeline', 'Word • Mar 01, 2024', Icons.description),
+                    const SizedBox(height: 12),
+                    _buildDocumentItem('Biology Diagram Scan', 'PNG • Apr 05, 2024', Icons.image),
+                    const SizedBox(height: 12),
+                    _buildDocumentItem('Financial Report Q1 2024', 'PDF • May 10, 2024', Icons.picture_as_pdf),
+                    const SizedBox(height: 30),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 30),
-            const Text(
-              'Your Documents',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 15),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'If Sort By',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'Filter',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildDocumentCategory('Research Papers', '12 Documents'),
-            _buildDocumentCategory('Course Materials', '8 Documents'),
-            _buildDocumentItem('Quantum Physics Fundamen', 'PDF • Jan 15, 2024'),
-            _buildDocumentItem('Machine Learning Algorithm', 'PPT • Feb 20, 2024'),
-            _buildDocumentItem('Historical Events Timeline', 'Word • Mar 01, 2024'),
-            _buildDocumentItem('Biology Diagram Scan', 'PNG • Apr 05, 2024'),
-            _buildDocumentItem('Financial Report Q1 2024', 'PDF • May 10, 2024'),
-            const SizedBox(height: 20),
           ],
         ),
       ),
-      bottomNavigationBar: AppBottomNavigation(
-        currentIndex: _currentIndex,
-        context: context,
+    );
+  }
+
+  Widget _buildFilterButton(String text, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.black87),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildDocumentCategory(String title, String count) {
+  Widget _buildFolderItem(String title, String subtitle, IconData icon) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.withOpacity(0.3)),
-        borderRadius: BorderRadius.circular(4),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: ListTile(
-        leading: const Icon(Icons.folder, color: Colors.blue),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
-        subtitle: Text(
-          count,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-        minLeadingWidth: 24,
+      child: Row(
+        children: [
+          Icon(icon, size: 28, color: Colors.blue),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.launch, size: 18, color: Colors.grey[400]),
+        ],
       ),
     );
   }
 
-  Widget _buildDocumentItem(String title, String details) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.withOpacity(0.3)),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: ListTile(
-        leading: const Icon(Icons.description, color: Colors.grey),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w500),
+  Widget _buildDocumentItem(String title, String details, IconData icon) {
+    return GestureDetector(
+      onTap: () {
+        _checkAuthAndNavigate(AppConstants.aiDocumentRoute);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        subtitle: Text(
-          details,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 24, color: Colors.grey[600]),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    details,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.star_border, size: 20, color: Colors.blue),
+          ],
         ),
-        trailing: const Icon(Icons.more_vert, size: 16),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-        minLeadingWidth: 24,
-        onTap: () {
-          _checkAuthAndNavigate(AppConstants.aiDocumentRoute);
-        },
       ),
     );
   }

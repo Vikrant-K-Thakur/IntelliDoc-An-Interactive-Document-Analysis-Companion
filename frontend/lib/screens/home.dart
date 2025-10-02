@@ -4,6 +4,7 @@ import 'package:docuverse/services/auth_service.dart';
 import 'package:docuverse/constants/app_constants.dart';
 import 'package:docuverse/widgets/bottom_navigation.dart';
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -12,8 +13,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
+  final int _currentIndex = 0;
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: const HomeScreenContent(),
+      bottomNavigationBar: AppBottomNavigation(
+        currentIndex: _currentIndex,
+        context: context,
+      ),
+    );
+  }
+}
+
+class HomeScreenContent extends StatefulWidget {
+  const HomeScreenContent({super.key});
+
+  @override
+  State<HomeScreenContent> createState() => _HomeScreenContentState();
+}
+
+class _HomeScreenContentState extends State<HomeScreenContent> {
   void _checkAuthAndNavigate(String route) {
     if (!AuthService.isLoggedIn) {
       _showLoginDialog();
@@ -44,234 +65,449 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+      backgroundColor: Colors.white,
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Quick Actions',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            // Custom Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Home',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined),
+                        onPressed: () {},
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/personal-space'),
+                        child: const CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.grey,
+                          backgroundImage: NetworkImage(
+                            'https://via.placeholder.com/150',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 15),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildActionButton('Upload File', Icons.upload_file, false),
-                _buildActionButton('Ask a Question', Icons.question_answer, true),
-                _buildActionButton('Generate Study Plan', Icons.calendar_today, false),
-              ],
-            ),
-            const SizedBox(height: 30),
-            const Divider(thickness: 1),
-            const SizedBox(height: 20),
-            const Text(
-              'Recent Documents',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            
+            // Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 10),
+                    
+                    // Quick Actions
+                    const Text(
+                      'Quick Actions',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Action Buttons Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildActionCard(
+                            'Upload File',
+                            Icons.upload_file_outlined,
+                            () => _checkAuthAndNavigate('/upload'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildActionCard(
+                            'Ask a Question',
+                            Icons.chat_bubble_outline,
+                            () => _checkAuthAndNavigate('/question'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildActionCard(
+                            'Generate Study Plan',
+                            Icons.menu_book_outlined,
+                            () => _checkAuthAndNavigate('/study-plan'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 30),
+                    
+                    // Recent Documents
+                    const Text(
+                      'Recent Documents',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    SizedBox(
+                      height: 200,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _buildDocumentCard(
+                            'Quantum Computing Basics',
+                            'Dec 12, 2023',
+                            'https://via.placeholder.com/150x200/E8EAF6/5C6BC0?text=Quantum',
+                          ),
+                          const SizedBox(width: 12),
+                          _buildDocumentCard(
+                            'AI in Healthcare: Ethical',
+                            'Jan 05, 2024',
+                            'https://via.placeholder.com/150x200/F3E5F5/8E24AA?text=AI+Health',
+                          ),
+                          const SizedBox(width: 12),
+                          _buildDocumentCard(
+                            'Machine Learning',
+                            'Feb 15, 2024',
+                            'https://via.placeholder.com/150x200/E0F2F1/00897B?text=ML',
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 30),
+                    
+                    // Starred Files
+                    const Text(
+                      'Starred Files',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    SizedBox(
+                      height: 200,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _buildStarredFileCard(
+                            'PhD Thesis Proposal Draft v3',
+                            'Apr 01, 2024',
+                            'https://via.placeholder.com/150x200/FFF3E0/F57C00?text=PhD',
+                          ),
+                          const SizedBox(width: 12),
+                          _buildStarredFileCard(
+                            'Project X - Q2 Financials',
+                            'Mar 28, 2024',
+                            'https://via.placeholder.com/150x200/E3F2FD/1976D2?text=Q2',
+                          ),
+                          const SizedBox(width: 12),
+                          _buildStarredFileCard(
+                            'Research Paper',
+                            'May 10, 2024',
+                            'https://via.placeholder.com/150x200/FCE4EC/C2185B?text=Research',
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 30),
+                    
+                    // Recent Summaries
+                    const Text(
+                      'Recent Summaries',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    _buildSummaryCard(
+                      'Summary: "Neural Networks"',
+                      'An AI-generated summary breaking down complex neural network concepts into digestible',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSummaryCard(
+                      'Summary: "Climate Change Impacts"',
+                      'Concise overview of the latest IPCC report findings on global warming.',
+                    ),
+                    
+                    const SizedBox(height: 30),
+                    
+                    // Flashcards in Progress
+                    const Text(
+                      'Flashcards in Progress',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    _buildFlashcardCard(),
+                    
+                    const SizedBox(height: 30),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 15),
-            _buildDocumentCard('Quantum Computing Basics', 'Dec 12, 2023'),
-            const SizedBox(height: 10),
-            _buildDocumentCard('AI in Healthcare:\nEthical', 'Jan 05, 2024'),
-            const SizedBox(height: 30),
-            const Text(
-              'Started Files',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 15),
-            _buildStartedFileCard('PhD Thesis', 'Proposal Draft v3', 'Apr 01, 2024'),
-            const SizedBox(height: 10),
-            _buildStartedFileCard('Project X - Q2 Financials', '', 'Mar 28, 2024'),
-            const SizedBox(height: 30),
-            const Text(
-              'Recent Summaries',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 15),
-            _buildSummaryCard(
-              'Summary: "Neural Networks"',
-              'An AI-generated summary breaking down complex neural network concepts into digestible',
-              false,
-            ),
-            const SizedBox(height: 10),
-            _buildSummaryCard(
-              'Summary: "Climate Change Impacts"',
-              'Concise overview of the latest IPCC report findings on global warming.',
-              true,
-            ),
-            const SizedBox(height: 30),
-            const Text(
-              'Flashcards in Progress',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 15),
-            _buildFlashcardCard(),
-            const SizedBox(height: 30),
           ],
         ),
       ),
-      bottomNavigationBar: AppBottomNavigation(
-        currentIndex: _currentIndex,
-        context: context,
+    );
+  }
+
+  Widget _buildActionCard(String text, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 28,
+              color: Colors.black87,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildActionButton(String text, IconData icon, bool isCompleted) {
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isCompleted ? Colors.green : Colors.grey[300],
-          ),
-          child: Icon(
-            icon,
-            size: 24,
-            color: isCompleted ? Colors.white : Colors.grey[600],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDocumentCard(String title, String date) {
+  Widget _buildDocumentCard(String title, String date, String imageUrl) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: 160,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                date,
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          const Icon(Icons.arrow_forward, size: 20),
         ],
       ),
-    );
-  }
-
-  Widget _buildStartedFileCard(String title, String subtitle, String date) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Container(
+              height: 120,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.grey[300]!,
+                    Colors.grey[200]!,
+                  ],
                 ),
               ),
-              if (subtitle.isNotEmpty) ...[
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.description, size: 40, color: Colors.grey),
+                  );
+                },
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
+                  date,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
                   ),
                 ),
               ],
-              const SizedBox(height: 4),
-              Text(
-                date,
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+            ),
           ),
-          const Icon(Icons.arrow_forward, size: 20),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCard(String title, String content, bool isCompleted) {
+  Widget _buildStarredFileCard(String title, String date, String imageUrl) {
+    return Container(
+      width: 160,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                child: Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.grey[300]!,
+                        Colors.grey[200]!,
+                      ],
+                    ),
+                  ),
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.folder, size: 40, color: Colors.grey),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.star_border,
+                    size: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  date,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(String title, String content) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 20,
-            height: 20,
-            margin: const EdgeInsets.only(top: 2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isCompleted ? Colors.green : Colors.grey,
-                width: 2,
-              ),
-              color: isCompleted ? Colors.green : Colors.transparent,
-            ),
-            child: isCompleted
-                ? const Icon(Icons.check, size: 14, color: Colors.white)
-                : null,
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 24,
+            color: Colors.teal[400],
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -281,22 +517,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   content,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 13,
+                    height: 1.4,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.arrow_forward, size: 20),
         ],
       ),
     );
@@ -306,25 +543,17 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 20,
-            height: 20,
-            margin: const EdgeInsets.only(top: 2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.green,
-                width: 2,
-              ),
-              color: Colors.green,
-            ),
-            child: const Icon(Icons.check, size: 14, color: Colors.white),
+          Icon(
+            Icons.school_outlined,
+            size: 24,
+            color: Colors.blue[600],
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -334,22 +563,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Text(
                   'Chemistry 101: Organic Compounds',
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 10),
-                LinearProgressIndicator(
-                  value: 0.65,
-                  backgroundColor: Colors.grey[300],
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: 0.65,
+                    minHeight: 8,
+                    backgroundColor: Colors.grey[200],
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[600]!),
+                  ),
                 ),
-                const SizedBox(height: 5),
-                const Text(
+                const SizedBox(height: 8),
+                Text(
                   '65% Complete',
                   style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontSize: 13,
                   ),
                 ),
               ],

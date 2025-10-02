@@ -17,7 +17,7 @@ class AppBottomNavigation extends StatelessWidget {
     if (!AuthService.isLoggedIn) {
       _showLoginDialog();
     } else {
-      Navigator.pushReplacementNamed(context, route);
+      Navigator.pushNamed(context, route);
     }
   }
 
