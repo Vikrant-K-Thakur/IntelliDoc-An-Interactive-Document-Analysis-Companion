@@ -1,10 +1,16 @@
 // screens/documents.dart
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:docuverse/services/auth_service.dart';
+import 'package:docuverse/services/file_storage_service.dart';
+import 'package:docuverse/models/folder_model.dart';
+import 'package:docuverse/models/file_model.dart';
 import 'package:docuverse/constants/app_constants.dart';
 import 'package:docuverse/widgets/bottom_navigation.dart';
 import 'package:docuverse/widgets/app_logo.dart';
 import 'package:docuverse/screens/folder_view.dart';
+import 'package:docuverse/utils/file_utils.dart';
+import 'package:docuverse/widgets/file_management_dialog.dart';
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
@@ -36,10 +42,24 @@ class DocumentsScreenContent extends StatefulWidget {
 }
 
 class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
-  List<Map<String, String>> folders = [
-    {'name': 'Research Papers', 'count': '12 Documents'},
-    {'name': 'Course Materials', 'count': '8 Documents'},
-  ];
+  List<FolderModel> folders = [];
+  List<FileModel> uploadedFiles = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final loadedFolders = await FileStorageService.getFolders();
+    final loadedFiles = await FileStorageService.getUnorganizedFiles();
+    
+    setState(() {
+      folders = loadedFolders;
+      uploadedFiles = loadedFiles;
+    });
+  }
 
   void _createNewFolder() {
     showDialog(
@@ -61,14 +81,16 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 if (folderName.isNotEmpty) {
-                  setState(() {
-                    folders.add({
-                      'name': folderName,
-                      'count': '0 Documents',
-                    });
-                  });
+                  final newFolder = FolderModel(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    name: folderName,
+                    createdAt: DateTime.now(),
+                  );
+                  
+                  await FileStorageService.addFolder(newFolder);
+                  _loadData();
                   Navigator.pop(context);
                 }
               },
@@ -80,31 +102,30 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
     );
   }
 
-  void _openFolder(String folderName) {
+  void _openFolder(FolderModel folder) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FolderViewScreen(folderName: folderName),
+        builder: (context) => FolderViewScreen(folder: folder),
       ),
     );
   }
 
-  void _deleteFolder(int index) {
+  void _deleteFolder(FolderModel folder) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Folder'),
-        content: Text('Are you sure you want to delete "${folders[index]['name']}"?'),
+        content: Text('Are you sure you want to delete "${folder.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                folders.removeAt(index);
-              });
+            onPressed: () async {
+              await FileStorageService.deleteFolder(folder.id);
+              _loadData();
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -118,6 +139,53 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
         ],
       ),
     );
+  }
+
+  Future<void> _pickFiles() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png'],
+      );
+
+      if (result != null) {
+        List<FileModel> newFiles = [];
+        
+        for (var file in result.files) {
+          final fileModel = FileModel(
+            id: DateTime.now().millisecondsSinceEpoch.toString() + file.name.hashCode.toString(),
+            name: file.name,
+            path: file.path ?? '',
+            type: file.extension ?? '',
+            size: file.size,
+            uploadedAt: DateTime.now(),
+          );
+          newFiles.add(fileModel);
+        }
+        
+        await FileStorageService.addFiles(newFiles);
+        _loadData();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${result.files.length} file(s) uploaded successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to pick files'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  IconData _getFileIcon(String fileName) {
+    return FileUtils.getFileIcon(fileName);
   }
 
   void _checkAuthAndNavigate(String route) {
@@ -143,6 +211,16 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
             child: const Text('Login'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showFileManagement(FileModel file) {
+    showDialog(
+      context: context,
+      builder: (context) => FileManagementDialog(
+        file: file,
+        onFileUpdated: _loadData,
       ),
     );
   }
@@ -222,27 +300,30 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                     const SizedBox(height: 16),
 
                     // Upload Area
-                    Container(
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.blue[200]!, width: 2, style: BorderStyle.solid),
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.blue[50],
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(Icons.upload_file, size: 48, color: Colors.blue[400]),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Drag & Drop Your Files Here',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Max file size: 25MB',
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                          ),
-                        ],
+                    GestureDetector(
+                      onTap: _pickFiles,
+                      child: Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blue[200]!, width: 2, style: BorderStyle.solid),
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.blue[50],
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(Icons.upload_file, size: 48, color: Colors.blue[400]),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Drag & Drop Your Files Here',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Max file size: 25MB',
+                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -251,7 +332,7 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: _pickFiles,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -298,13 +379,11 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                     const SizedBox(height: 20),
 
                     // Document Folders
-                    ...folders.asMap().entries.map((entry) {
-                      int index = entry.key;
-                      Map<String, String> folder = entry.value;
+                    ...folders.map((folder) {
                       return Column(
                         children: [
                           Dismissible(
-                            key: Key(folder['name']!),
+                            key: Key(folder.id),
                             direction: DismissDirection.endToStart,
                             background: Container(
                               alignment: Alignment.centerRight,
@@ -320,20 +399,47 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                               ),
                             ),
                             confirmDismiss: (direction) async {
-                              _deleteFolder(index);
+                              _deleteFolder(folder);
                               return false;
                             },
                             child: _buildFolderItem(
-                              folder['name']!,
-                              folder['count']!,
+                              folder.name,
+                              folder.documentCount,
                               Icons.folder_open,
-                              onTap: () => _openFolder(folder['name']!),
+                              onTap: () => _openFolder(folder),
                             ),
                           ),
                           const SizedBox(height: 12),
                         ],
                       );
                     }).toList(),
+                    
+                    // Uploaded Files Section
+                    if (uploadedFiles.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Uploaded Files',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ...uploadedFiles.map((file) => Column(
+                        children: [
+                          _buildDocumentItem(
+                            file.name,
+                            file.typeWithDate,
+                            _getFileIcon(file.name),
+                            file,
+                            onManage: () => _showFileManagement(file),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      )).toList(),
+                    ],
+                    
                     const SizedBox(height: 30),
                   ],
                 ),
@@ -418,7 +524,7 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
     );
   }
 
-  Widget _buildDocumentItem(String title, String details, IconData icon) {
+  Widget _buildDocumentItem(String title, String details, IconData icon, FileModel file, {VoidCallback? onManage}) {
     return GestureDetector(
       onTap: () {
         _checkAuthAndNavigate(AppConstants.aiDocumentRoute);
@@ -447,7 +553,7 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, size: 24, color: Colors.grey[600]),
+              child: Icon(icon, size: 24, color: FileUtils.getFileColor(file.name)),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -470,7 +576,18 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                 ],
               ),
             ),
-            Icon(Icons.star_border, size: 20, color: Colors.blue),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (onManage != null)
+                  GestureDetector(
+                    onTap: onManage,
+                    child: Icon(Icons.more_vert, size: 20, color: Colors.grey[600]),
+                  ),
+                const SizedBox(width: 8),
+                Icon(Icons.star_border, size: 20, color: Colors.blue),
+              ],
+            ),
           ],
         ),
       ),

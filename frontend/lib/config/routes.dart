@@ -14,6 +14,7 @@ import 'package:docuverse/screens/collaboration_sharing.dart';
 import 'package:docuverse/screens/edit_profile.dart';
 import 'package:docuverse/screens/folder_view.dart';
 import 'package:docuverse/constants/app_constants.dart';
+import 'package:docuverse/models/folder_model.dart';
 
 class AppRoutes {
   static Map<String, WidgetBuilder> get routes => {
@@ -28,6 +29,12 @@ class AppRoutes {
     AppConstants.aiDocumentRoute: (context) => const AIDocumentInteractionScreen(),
     AppConstants.collaborationRoute: (context) => const CollaborationSharingScreen(),
     '/edit-profile': (context) => const EditProfileScreen(),
-    '/folder-view': (context) => const FolderViewScreen(folderName: 'Folder'),
+    '/folder-view': (context) => FolderViewScreen(
+        folder: FolderModel(
+          id: 'default',
+          name: 'Folder',
+          createdAt: DateTime.now(),
+        ),
+      ),
   };
 }
