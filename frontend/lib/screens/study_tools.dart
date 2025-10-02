@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:docuverse/services/auth_service.dart';
 import 'package:docuverse/constants/app_constants.dart';
 import 'package:docuverse/widgets/bottom_navigation.dart';
+import 'package:docuverse/widgets/app_logo.dart';
 
 class StudyToolsScreen extends StatefulWidget {
   const StudyToolsScreen({super.key});
@@ -74,29 +75,19 @@ class _StudyToolsScreenContentState extends State<StudyToolsScreenContent> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Study Tools',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
                   Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
-                        onPressed: () {},
+                      const AppLogo(
+                        size: 32,
+                        showText: false,
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/personal-space'),
-                        child: const CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.grey,
-                          backgroundImage: NetworkImage(
-                            'https://via.placeholder.com/150',
-                          ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Study Tools',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
                       ),
                     ],

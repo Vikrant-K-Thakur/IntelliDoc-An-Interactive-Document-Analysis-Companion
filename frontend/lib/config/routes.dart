@@ -11,6 +11,8 @@ import 'package:docuverse/screens/personal_space.dart';
 import 'package:docuverse/screens/main_container.dart';
 import 'package:docuverse/screens/ai_document_interaction.dart';
 import 'package:docuverse/screens/collaboration_sharing.dart';
+import 'package:docuverse/screens/edit_profile.dart';
+import 'package:docuverse/screens/folder_view.dart';
 import 'package:docuverse/constants/app_constants.dart';
 
 class AppRoutes {
@@ -25,5 +27,7 @@ class AppRoutes {
     AppConstants.personalSpaceRoute: (context) => const MainContainer(initialIndex: 3),
     AppConstants.aiDocumentRoute: (context) => const AIDocumentInteractionScreen(),
     AppConstants.collaborationRoute: (context) => const CollaborationSharingScreen(),
+    '/edit-profile': (context) => const EditProfileScreen(),
+    '/folder-view': (context) => const FolderViewScreen(folderName: 'Folder'),
   };
 }

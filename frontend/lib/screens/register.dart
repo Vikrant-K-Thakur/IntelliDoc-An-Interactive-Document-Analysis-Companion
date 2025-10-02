@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:docuverse/services/auth_service.dart';
 import 'package:docuverse/constants/app_constants.dart';
 import 'package:docuverse/utils/validators.dart';
+import 'package:docuverse/widgets/app_logo.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -98,14 +99,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
               const SizedBox(height: 10),
-              const Text(
-                'Join DocuSense AI today and streamline your\ndocument management.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  height: 1.4,
+              const Center(
+                child: AppLogo(
+                  size: 70,
+                  showText: false,
                 ),
-                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              const Center(
+                child: Text(
+                  'Join DocuSense AI today and streamline your\ndocument management.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
               const SizedBox(height: 40),
 

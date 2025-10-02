@@ -1,8 +1,10 @@
 // screens/home.dart
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:docuverse/services/auth_service.dart';
 import 'package:docuverse/constants/app_constants.dart';
 import 'package:docuverse/widgets/bottom_navigation.dart';
+import 'package:docuverse/widgets/app_logo.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -35,6 +37,19 @@ class HomeScreenContent extends StatefulWidget {
 }
 
 class _HomeScreenContentState extends State<HomeScreenContent> {
+  User? get currentUser => FirebaseAuth.instance.currentUser;
+
+  String _getUserInitials(String? displayName) {
+    if (displayName == null || displayName.isEmpty) return 'U';
+    
+    List<String> nameParts = displayName.trim().split(' ');
+    if (nameParts.length == 1) {
+      return nameParts[0][0].toUpperCase();
+    } else {
+      return '${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}'.toUpperCase();
+    }
+  }
+
   void _checkAuthAndNavigate(String route) {
     if (!AuthService.isLoggedIn) {
       _showLoginDialog();
@@ -75,13 +90,22 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Home',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+                  Row(
+                    children: [
+                      const AppLogo(
+                        size: 32,
+                        showText: false,
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Home',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
                   Row(
                     children: [
@@ -91,12 +115,17 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                       ),
                       const SizedBox(width: 8),
                       GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/personal-space'),
-                        child: const CircleAvatar(
+                        onTap: () => Navigator.pushNamed(context, AppConstants.personalSpaceRoute),
+                        child: CircleAvatar(
                           radius: 20,
-                          backgroundColor: Colors.grey,
-                          backgroundImage: NetworkImage(
-                            'https://via.placeholder.com/150',
+                          backgroundColor: Colors.blue,
+                          child: Text(
+                            _getUserInitials(currentUser?.displayName),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

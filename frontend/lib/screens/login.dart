@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:docuverse/services/auth_service.dart';
 import 'package:docuverse/constants/app_constants.dart';
 import 'package:docuverse/utils/validators.dart';
+// import 'package:docuverse/widgets/app_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -107,6 +108,13 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
+                // const Center(
+                //   child: AppLogo(
+                //     size: 80,
+                //     showText: false,
+                //   ),
+                // ),
+                const SizedBox(height: 24),
                 const Center(
                   child: Text(
                     'Login',
@@ -120,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 8),
                 const Center(
                   child: Text(
-                    'Access your DocuVerse AI account',
+                    'Access your IntelliDoc AI account',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey,

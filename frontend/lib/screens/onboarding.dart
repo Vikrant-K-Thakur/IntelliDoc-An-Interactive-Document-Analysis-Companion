@@ -1,5 +1,6 @@
 // screens/onboarding.dart
 import 'package:flutter/material.dart';
+import 'package:docuverse/widgets/app_logo.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -11,14 +12,12 @@ class OnboardingScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'DocuSenseAI',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-              ),
+            const AppLogo(
+              size: 120,
+              showText: true,
+              textSize: 32,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             const Text(
               'Your AI Document Assistant',
               style: TextStyle(

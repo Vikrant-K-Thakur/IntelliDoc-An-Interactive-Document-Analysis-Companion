@@ -1,6 +1,11 @@
 // screens/personal_space.dart
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:docuverse/widgets/bottom_navigation.dart';
+import 'package:docuverse/widgets/app_logo.dart';
+import 'package:docuverse/screens/edit_profile.dart';
+import 'package:docuverse/services/auth_service.dart';
+import 'package:docuverse/constants/app_constants.dart';
 
 class PersonalSpaceScreen extends StatefulWidget {
   const PersonalSpaceScreen({super.key});
@@ -32,6 +37,39 @@ class PersonalSpaceScreenContent extends StatefulWidget {
 }
 
 class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent> {
+  User? get currentUser => FirebaseAuth.instance.currentUser;
+  final AuthService _authService = AuthService();
+
+  String _getUserInitials(String? displayName) {
+    if (displayName == null || displayName.isEmpty) return 'U';
+    
+    List<String> nameParts = displayName.trim().split(' ');
+    if (nameParts.length == 1) {
+      return nameParts[0][0].toUpperCase();
+    } else {
+      return '${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}'.toUpperCase();
+    }
+  }
+
+  Future<void> _logout() async {
+    try {
+      await _authService.signOut();
+      await _authService.setLoggedIn(false);
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppConstants.loginRoute);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Logout failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,26 +83,19 @@ class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Personal Space',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
                   Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
-                        onPressed: () {},
+                      const AppLogo(
+                        size: 32,
+                        showText: false,
                       ),
-                      const SizedBox(width: 8),
-                      const CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.grey,
-                        backgroundImage: NetworkImage(
-                          'https://via.placeholder.com/150',
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Personal Space',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
                       ),
                     ],
@@ -83,11 +114,16 @@ class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent>
                     // Profile Section
                     Row(
                       children: [
-                        const CircleAvatar(
+                        CircleAvatar(
                           radius: 24,
-                          backgroundColor: Colors.grey,
-                          backgroundImage: NetworkImage(
-                            'https://via.placeholder.com/150',
+                          backgroundColor: Colors.blue,
+                          child: Text(
+                            _getUserInitials(currentUser?.displayName),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -95,16 +131,16 @@ class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Olivia Rhye',
-                                style: TextStyle(
+                              Text(
+                                currentUser?.displayName ?? 'User Name',
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black,
                                 ),
                               ),
                               Text(
-                                'olivia.rhye@example.com',
+                                currentUser?.email ?? 'user@example.com',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[600],
@@ -114,7 +150,14 @@ class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent>
                           ),
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const EditProfileScreen(),
+                              ),
+                            ).then((_) => setState(() {}));
+                          },
                           child: const Text(
                             'Edit Profile',
                             style: TextStyle(
@@ -156,7 +199,8 @@ class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent>
                       'Logout',
                       'Sign out of your account',
                       Icons.logout,
-                      Colors.blue,
+                      Colors.red,
+                      onTap: _logout,
                     ),
                     const SizedBox(height: 30),
 
@@ -212,9 +256,9 @@ class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent>
     );
   }
 
-  Widget _buildMenuItem(String title, String subtitle, IconData icon, Color iconColor) {
+  Widget _buildMenuItem(String title, String subtitle, IconData icon, Color iconColor, {VoidCallback? onTap}) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap ?? () {},
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

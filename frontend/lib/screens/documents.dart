@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:docuverse/services/auth_service.dart';
 import 'package:docuverse/constants/app_constants.dart';
 import 'package:docuverse/widgets/bottom_navigation.dart';
+import 'package:docuverse/widgets/app_logo.dart';
+import 'package:docuverse/screens/folder_view.dart';
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
@@ -34,6 +36,90 @@ class DocumentsScreenContent extends StatefulWidget {
 }
 
 class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
+  List<Map<String, String>> folders = [
+    {'name': 'Research Papers', 'count': '12 Documents'},
+    {'name': 'Course Materials', 'count': '8 Documents'},
+  ];
+
+  void _createNewFolder() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        String folderName = '';
+        return AlertDialog(
+          title: const Text('Create New Folder'),
+          content: TextField(
+            onChanged: (value) => folderName = value,
+            decoration: const InputDecoration(
+              hintText: 'Enter folder name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (folderName.isNotEmpty) {
+                  setState(() {
+                    folders.add({
+                      'name': folderName,
+                      'count': '0 Documents',
+                    });
+                  });
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _openFolder(String folderName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FolderViewScreen(folderName: folderName),
+      ),
+    );
+  }
+
+  void _deleteFolder(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Folder'),
+        content: Text('Are you sure you want to delete "${folders[index]['name']}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                folders.removeAt(index);
+              });
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Folder deleted successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _checkAuthAndNavigate(String route) {
     if (!AuthService.isLoggedIn) {
       _showLoginDialog();
@@ -74,29 +160,19 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Documents',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
                   Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
-                        onPressed: () {},
+                      const AppLogo(
+                        size: 32,
+                        showText: false,
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/personal-space'),
-                        child: const CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.grey,
-                          backgroundImage: NetworkImage(
-                            'https://via.placeholder.com/150',
-                          ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Documents',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
                       ),
                     ],
@@ -209,32 +285,55 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Sort and Filter
+                    // Sort, Filter and New Folder buttons
                     Row(
                       children: [
                         _buildFilterButton('Sort By', Icons.sort),
                         const SizedBox(width: 10),
                         _buildFilterButton('Filter', Icons.filter_list),
+                        const SizedBox(width: 10),
+                        _buildFilterButton('New Folder', Icons.create_new_folder, onTap: _createNewFolder),
                       ],
                     ),
                     const SizedBox(height: 20),
 
-                    // Document Categories
-                    _buildFolderItem('Research Papers', '12 Documents', Icons.folder_open),
-                    const SizedBox(height: 12),
-                    _buildFolderItem('Course Materials', '8 Documents', Icons.folder_open),
-                    const SizedBox(height: 20),
-
-                    // Document Items
-                    _buildDocumentItem('Quantum Physics Fundamen', 'PDF • Jan 15, 2024', Icons.picture_as_pdf),
-                    const SizedBox(height: 12),
-                    _buildDocumentItem('Machine Learning Algorithm', 'PPT • Feb 20, 2024', Icons.slideshow),
-                    const SizedBox(height: 12),
-                    _buildDocumentItem('Historical Events Timeline', 'Word • Mar 01, 2024', Icons.description),
-                    const SizedBox(height: 12),
-                    _buildDocumentItem('Biology Diagram Scan', 'PNG • Apr 05, 2024', Icons.image),
-                    const SizedBox(height: 12),
-                    _buildDocumentItem('Financial Report Q1 2024', 'PDF • May 10, 2024', Icons.picture_as_pdf),
+                    // Document Folders
+                    ...folders.asMap().entries.map((entry) {
+                      int index = entry.key;
+                      Map<String, String> folder = entry.value;
+                      return Column(
+                        children: [
+                          Dismissible(
+                            key: Key(folder['name']!),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                            confirmDismiss: (direction) async {
+                              _deleteFolder(index);
+                              return false;
+                            },
+                            child: _buildFolderItem(
+                              folder['name']!,
+                              folder['count']!,
+                              Icons.folder_open,
+                              onTap: () => _openFolder(folder['name']!),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      );
+                    }).toList(),
                     const SizedBox(height: 30),
                   ],
                 ),
@@ -246,69 +345,75 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
     );
   }
 
-  Widget _buildFilterButton(String text, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Colors.black87),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-        ],
+  Widget _buildFilterButton(String text, IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: Colors.black87),
+            const SizedBox(width: 6),
+            Text(
+              text,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildFolderItem(String title, String subtitle, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 28, color: Colors.blue),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
+  Widget _buildFolderItem(String title, String subtitle, IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-          ),
-          Icon(Icons.launch, size: 18, color: Colors.grey[400]),
-        ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 28, color: Colors.blue),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.launch, size: 18, color: Colors.grey[400]),
+          ],
+        ),
       ),
     );
   }
