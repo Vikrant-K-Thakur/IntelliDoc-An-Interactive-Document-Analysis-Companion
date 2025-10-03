@@ -135,4 +135,24 @@ class FileStorageService {
       await saveFolders(folders);
     }
   }
+
+  static Future<void> renameFolder(String folderId, String newName) async {
+    final folders = await getFolders();
+    final folderIndex = folders.indexWhere((folder) => folder.id == folderId);
+    
+    if (folderIndex != -1) {
+      folders[folderIndex] = folders[folderIndex].copyWith(name: newName);
+      await saveFolders(folders);
+    }
+  }
+
+  static Future<List<FolderModel>> getSubfolders(String parentFolderId) async {
+    final folders = await getFolders();
+    return folders.where((folder) => folder.parentFolderId == parentFolderId).toList();
+  }
+
+  static Future<List<FolderModel>> getRootFolders() async {
+    final folders = await getFolders();
+    return folders.where((folder) => folder.parentFolderId == null).toList();
+  }
 }

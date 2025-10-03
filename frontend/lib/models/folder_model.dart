@@ -3,12 +3,14 @@ class FolderModel {
   final String name;
   final DateTime createdAt;
   final List<String> fileIds;
+  final String? parentFolderId;
 
   FolderModel({
     required this.id,
     required this.name,
     required this.createdAt,
     this.fileIds = const [],
+    this.parentFolderId,
   });
 
   Map<String, dynamic> toJson() {
@@ -17,6 +19,7 @@ class FolderModel {
       'name': name,
       'createdAt': createdAt.toIso8601String(),
       'fileIds': fileIds,
+      'parentFolderId': parentFolderId,
     };
   }
 
@@ -26,6 +29,7 @@ class FolderModel {
       name: json['name'],
       createdAt: DateTime.parse(json['createdAt']),
       fileIds: List<String>.from(json['fileIds'] ?? []),
+      parentFolderId: json['parentFolderId'],
     );
   }
 
@@ -36,12 +40,14 @@ class FolderModel {
     String? name,
     DateTime? createdAt,
     List<String>? fileIds,
+    String? parentFolderId,
   }) {
     return FolderModel(
       id: id ?? this.id,
       name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
       fileIds: fileIds ?? this.fileIds,
+      parentFolderId: parentFolderId ?? this.parentFolderId,
     );
   }
 }

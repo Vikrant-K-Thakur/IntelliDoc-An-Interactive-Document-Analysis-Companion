@@ -52,7 +52,7 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
   }
 
   Future<void> _loadData() async {
-    final loadedFolders = await FileStorageService.getFolders();
+    final loadedFolders = await FileStorageService.getRootFolders();
     final loadedFiles = await FileStorageService.getUnorganizedFiles();
     
     setState(() {
@@ -222,6 +222,48 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
         file: file,
         onFileUpdated: _loadData,
       ),
+    );
+  }
+
+  void _renameFolder(FolderModel folder) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        String newName = folder.name;
+        return AlertDialog(
+          title: const Text('Rename Folder'),
+          content: TextField(
+            controller: TextEditingController(text: folder.name),
+            onChanged: (value) => newName = value,
+            decoration: const InputDecoration(
+              hintText: 'Enter new folder name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (newName.isNotEmpty && newName != folder.name) {
+                  await FileStorageService.renameFolder(folder.id, newName);
+                  _loadData();
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Folder renamed successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Rename'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -407,6 +449,7 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                               folder.documentCount,
                               Icons.folder_open,
                               onTap: () => _openFolder(folder),
+                              onRename: () => _renameFolder(folder),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -476,7 +519,7 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
     );
   }
 
-  Widget _buildFolderItem(String title, String subtitle, IconData icon, {VoidCallback? onTap}) {
+  Widget _buildFolderItem(String title, String subtitle, IconData icon, {VoidCallback? onTap, VoidCallback? onRename}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -517,7 +560,18 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                 ],
               ),
             ),
-            Icon(Icons.launch, size: 18, color: Colors.grey[400]),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (onRename != null)
+                  GestureDetector(
+                    onTap: onRename,
+                    child: Icon(Icons.edit, size: 18, color: Colors.grey[600]),
+                  ),
+                const SizedBox(width: 8),
+                Icon(Icons.launch, size: 18, color: Colors.grey[400]),
+              ],
+            ),
           ],
         ),
       ),

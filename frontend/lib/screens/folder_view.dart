@@ -20,17 +20,20 @@ class FolderViewScreen extends StatefulWidget {
 
 class _FolderViewScreenState extends State<FolderViewScreen> {
   List<FileModel> folderFiles = [];
+  List<FolderModel> subfolders = [];
 
   @override
   void initState() {
     super.initState();
-    _loadFolderFiles();
+    _loadFolderContent();
   }
 
-  Future<void> _loadFolderFiles() async {
+  Future<void> _loadFolderContent() async {
     final files = await FileStorageService.getFilesInFolder(widget.folder.id);
+    final folders = await FileStorageService.getSubfolders(widget.folder.id);
     setState(() {
       folderFiles = files;
+      subfolders = folders;
     });
   }
 
@@ -60,7 +63,7 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
         
         await FileStorageService.addFiles(newFiles);
         await FileStorageService.updateFolderFileCount(widget.folder.id);
-        _loadFolderFiles();
+        _loadFolderContent();
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -115,8 +118,50 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
       context: context,
       builder: (context) => FileManagementDialog(
         file: file,
-        onFileUpdated: _loadFolderFiles,
+        onFileUpdated: _loadFolderContent,
       ),
+    );
+  }
+
+  void _createSubfolder() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        String folderName = '';
+        return AlertDialog(
+          title: const Text('Create New Folder'),
+          content: TextField(
+            onChanged: (value) => folderName = value,
+            decoration: const InputDecoration(
+              hintText: 'Enter folder name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (folderName.isNotEmpty) {
+                  final newFolder = FolderModel(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    name: folderName,
+                    createdAt: DateTime.now(),
+                    parentFolderId: widget.folder.id,
+                  );
+                  
+                  await FileStorageService.addFolder(newFolder);
+                  _loadFolderContent();
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -131,13 +176,40 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
         elevation: 0,
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _addFilesToFolder,
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'add_files') {
+                _addFilesToFolder();
+              } else if (value == 'new_folder') {
+                _createSubfolder();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'add_files',
+                child: Row(
+                  children: [
+                    Icon(Icons.upload_file),
+                    SizedBox(width: 8),
+                    Text('Add Files'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'new_folder',
+                child: Row(
+                  children: [
+                    Icon(Icons.create_new_folder),
+                    SizedBox(width: 8),
+                    Text('New Folder'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
-      body: folderFiles.isEmpty
+      body: (folderFiles.isEmpty && subfolders.isEmpty)
           ? const Padding(
               padding: EdgeInsets.all(20),
               child: Center(
@@ -159,7 +231,7 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Tap + to add documents',
+                      'Use menu to add files or folders',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey,
@@ -171,15 +243,25 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
             )
           : ListView.builder(
               padding: const EdgeInsets.all(20),
-              itemCount: folderFiles.length,
+              itemCount: subfolders.length + folderFiles.length,
               itemBuilder: (context, index) {
-                final file = folderFiles[index];
-                return Column(
-                  children: [
-                    _buildFileItem(file, onManage: () => _showFileManagement(file)),
-                    const SizedBox(height: 12),
-                  ],
-                );
+                if (index < subfolders.length) {
+                  final folder = subfolders[index];
+                  return Column(
+                    children: [
+                      _buildSubfolderItem(folder),
+                      const SizedBox(height: 12),
+                    ],
+                  );
+                } else {
+                  final file = folderFiles[index - subfolders.length];
+                  return Column(
+                    children: [
+                      _buildFileItem(file, onManage: () => _showFileManagement(file)),
+                      const SizedBox(height: 12),
+                    ],
+                  );
+                }
               },
             ),
     );
@@ -248,6 +330,61 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
                 Icon(Icons.star_border, size: 20, color: Colors.blue),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubfolderItem(FolderModel folder) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FolderViewScreen(folder: folder),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.folder, size: 28, color: Colors.blue),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    folder.name,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    folder.documentCount,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 18, color: Colors.grey[400]),
           ],
         ),
       ),
