@@ -267,6 +267,32 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
     );
   }
 
+  Future<void> _handleDrop(Map<String, dynamic> data, String targetFolderId) async {
+    if (data['type'] == 'file') {
+      await FileStorageService.moveFileToFolder(data['id'], targetFolderId);
+      await FileStorageService.updateFolderFileCount(targetFolderId);
+      _loadData();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('File moved to folder'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else if (data['type'] == 'folder') {
+      String sourceFolderId = data['id'];
+      if (sourceFolderId != targetFolderId) {
+        await FileStorageService.moveFolderToFolder(sourceFolderId, targetFolderId);
+        _loadData();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Folder moved successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -424,33 +450,106 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                     ...folders.map((folder) {
                       return Column(
                         children: [
-                          Dismissible(
-                            key: Key(folder.id),
-                            direction: DismissDirection.endToStart,
-                            background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.delete,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                            ),
-                            confirmDismiss: (direction) async {
-                              _deleteFolder(folder);
-                              return false;
+                          DragTarget<Map<String, dynamic>>(
+                            onAccept: (data) => _handleDrop(data, folder.id),
+                            builder: (context, candidateData, rejectedData) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  border: candidateData.isNotEmpty 
+                                      ? Border.all(color: Colors.blue, width: 2)
+                                      : null,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Draggable<Map<String, dynamic>>(
+                                  data: {'type': 'folder', 'id': folder.id},
+                                  feedback: Material(
+                                    elevation: 4,
+                                    child: Container(
+                                      width: 200,
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.blue),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.folder, size: 16, color: Colors.blue),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              folder.name,
+                                              style: const TextStyle(fontSize: 12),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  childWhenDragging: Opacity(
+                                    opacity: 0.5,
+                                    child: Dismissible(
+                                      key: Key(folder.id),
+                                      direction: DismissDirection.endToStart,
+                                      background: Container(
+                                        alignment: Alignment.centerRight,
+                                        padding: const EdgeInsets.only(right: 20),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(
+                                          Icons.delete,
+                                          color: Colors.white,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      confirmDismiss: (direction) async {
+                                        _deleteFolder(folder);
+                                        return false;
+                                      },
+                                      child: _buildFolderItem(
+                                        folder.name,
+                                        folder.documentCount,
+                                        Icons.folder_open,
+                                        onTap: () => _openFolder(folder),
+                                        onRename: () => _renameFolder(folder),
+                                      ),
+                                    ),
+                                  ),
+                                  child: Dismissible(
+                                    key: Key(folder.id),
+                                    direction: DismissDirection.endToStart,
+                                    background: Container(
+                                      alignment: Alignment.centerRight,
+                                      padding: const EdgeInsets.only(right: 20),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                        Icons.delete,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
+                                    ),
+                                    confirmDismiss: (direction) async {
+                                      _deleteFolder(folder);
+                                      return false;
+                                    },
+                                    child: _buildFolderItem(
+                                      folder.name,
+                                      folder.documentCount,
+                                      Icons.folder_open,
+                                      onTap: () => _openFolder(folder),
+                                      onRename: () => _renameFolder(folder),
+                                    ),
+                                  ),
+                                ),
+                              );
                             },
-                            child: _buildFolderItem(
-                              folder.name,
-                              folder.documentCount,
-                              Icons.folder_open,
-                              onTap: () => _openFolder(folder),
-                              onRename: () => _renameFolder(folder),
-                            ),
                           ),
                           const SizedBox(height: 12),
                         ],
@@ -471,12 +570,51 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                       const SizedBox(height: 12),
                       ...uploadedFiles.map((file) => Column(
                         children: [
-                          _buildDocumentItem(
-                            file.name,
-                            file.typeWithDate,
-                            _getFileIcon(file.name),
-                            file,
-                            onManage: () => _showFileManagement(file),
+                          Draggable<Map<String, dynamic>>(
+                            data: {'type': 'file', 'id': file.id},
+                            feedback: Material(
+                              elevation: 4,
+                              child: Container(
+                                width: 200,
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.blue),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(_getFileIcon(file.name), size: 16),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        file.name,
+                                        style: const TextStyle(fontSize: 12),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            childWhenDragging: Opacity(
+                              opacity: 0.5,
+                              child: _buildDocumentItem(
+                                file.name,
+                                file.typeWithDate,
+                                _getFileIcon(file.name),
+                                file,
+                                onManage: () => _showFileManagement(file),
+                              ),
+                            ),
+                            child: _buildDocumentItem(
+                              file.name,
+                              file.typeWithDate,
+                              _getFileIcon(file.name),
+                              file,
+                              onManage: () => _showFileManagement(file),
+                            ),
                           ),
                           const SizedBox(height: 8),
                         ],

@@ -249,7 +249,74 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
                   final folder = subfolders[index];
                   return Column(
                     children: [
-                      _buildSubfolderItem(folder),
+                      DragTarget<Map<String, dynamic>>(
+                        onAccept: (data) => _handleDrop(data, folder.id),
+                        builder: (context, candidateData, rejectedData) {
+                          return Container(
+                            decoration: BoxDecoration(
+                              border: candidateData.isNotEmpty 
+                                  ? Border.all(color: Colors.blue, width: 2)
+                                  : null,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Dismissible(
+                              key: Key(folder.id),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.delete,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                              confirmDismiss: (direction) async {
+                                _deleteSubfolder(folder);
+                                return false;
+                              },
+                              child: Draggable<Map<String, dynamic>>(
+                                data: {'type': 'folder', 'id': folder.id},
+                                feedback: Material(
+                                  elevation: 4,
+                                  child: Container(
+                                    width: 200,
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.blue),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.folder, size: 16, color: Colors.blue),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            folder.name,
+                                            style: const TextStyle(fontSize: 12),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                childWhenDragging: Opacity(
+                                  opacity: 0.5,
+                                  child: _buildSubfolderItem(folder, onRename: () => _renameSubfolder(folder)),
+                                ),
+                                child: _buildSubfolderItem(folder, onRename: () => _renameSubfolder(folder)),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                       const SizedBox(height: 12),
                     ],
                   );
@@ -257,7 +324,40 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
                   final file = folderFiles[index - subfolders.length];
                   return Column(
                     children: [
-                      _buildFileItem(file, onManage: () => _showFileManagement(file)),
+                      Draggable<Map<String, dynamic>>(
+                        data: {'type': 'file', 'id': file.id},
+                        feedback: Material(
+                          elevation: 4,
+                          child: Container(
+                            width: 200,
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blue),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(_getFileIcon(file.name), size: 16),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    file.name,
+                                    style: const TextStyle(fontSize: 12),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        childWhenDragging: Opacity(
+                          opacity: 0.5,
+                          child: _buildFileItem(file, onManage: () => _showFileManagement(file)),
+                        ),
+                        child: _buildFileItem(file, onManage: () => _showFileManagement(file)),
+                      ),
                       const SizedBox(height: 12),
                     ],
                   );
@@ -336,7 +436,7 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
     );
   }
 
-  Widget _buildSubfolderItem(FolderModel folder) {
+  Widget _buildSubfolderItem(FolderModel folder, {VoidCallback? onRename}) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -384,10 +484,120 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, size: 18, color: Colors.grey[400]),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (onRename != null)
+                  GestureDetector(
+                    onTap: onRename,
+                    child: Icon(Icons.edit, size: 18, color: Colors.grey[600]),
+                  ),
+                const SizedBox(width: 8),
+                Icon(Icons.chevron_right, size: 18, color: Colors.grey[400]),
+              ],
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _handleDrop(Map<String, dynamic> data, String targetFolderId) async {
+    if (data['type'] == 'file') {
+      await FileStorageService.moveFileToFolder(data['id'], targetFolderId);
+      await FileStorageService.updateFolderFileCount(widget.folder.id);
+      await FileStorageService.updateFolderFileCount(targetFolderId);
+      _loadFolderContent();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('File moved to folder'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else if (data['type'] == 'folder') {
+      String sourceFolderId = data['id'];
+      if (sourceFolderId != targetFolderId) {
+        await FileStorageService.moveFolderToFolder(sourceFolderId, targetFolderId);
+        _loadFolderContent();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Folder moved successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
+  }
+
+  void _deleteSubfolder(FolderModel folder) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Folder'),
+        content: Text('Are you sure you want to delete "${folder.name}" and all its contents?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await FileStorageService.deleteFolder(folder.id);
+              _loadFolderContent();
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Folder deleted successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _renameSubfolder(FolderModel folder) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        String newName = folder.name;
+        return AlertDialog(
+          title: const Text('Rename Folder'),
+          content: TextField(
+            controller: TextEditingController(text: folder.name),
+            onChanged: (value) => newName = value,
+            decoration: const InputDecoration(
+              hintText: 'Enter new folder name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (newName.isNotEmpty && newName != folder.name) {
+                  await FileStorageService.renameFolder(folder.id, newName);
+                  _loadFolderContent();
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Folder renamed successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Rename'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

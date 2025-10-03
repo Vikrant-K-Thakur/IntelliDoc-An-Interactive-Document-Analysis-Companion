@@ -155,4 +155,16 @@ class FileStorageService {
     final folders = await getFolders();
     return folders.where((folder) => folder.parentFolderId == null).toList();
   }
+
+  static Future<void> moveFolderToFolder(String folderId, String targetFolderId) async {
+    final folders = await getFolders();
+    final folderIndex = folders.indexWhere((folder) => folder.id == folderId);
+    
+    if (folderIndex != -1) {
+      folders[folderIndex] = folders[folderIndex].copyWith(
+        parentFolderId: targetFolderId,
+      );
+      await saveFolders(folders);
+    }
+  }
 }
