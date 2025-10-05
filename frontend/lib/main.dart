@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:docuverse/config/app_config.dart';
-import 'package:docuverse/config/routes.dart';
-import 'package:docuverse/constants/app_constants.dart';
+import 'package:docuverse/core/routes.dart';
+import 'package:docuverse/shared/constants/app_constants.dart';
 import 'firebase_options.dart';
 
 void main() async {

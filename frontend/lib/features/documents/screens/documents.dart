@@ -1,16 +1,16 @@
 // screens/documents.dart
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:docuverse/services/auth_service.dart';
-import 'package:docuverse/services/file_storage_service.dart';
-import 'package:docuverse/models/folder_model.dart';
-import 'package:docuverse/models/file_model.dart';
-import 'package:docuverse/constants/app_constants.dart';
-import 'package:docuverse/widgets/bottom_navigation.dart';
-import 'package:docuverse/widgets/app_logo.dart';
-import 'package:docuverse/screens/folder_view.dart';
-import 'package:docuverse/utils/file_utils.dart';
-import 'package:docuverse/widgets/file_management_dialog.dart';
+import 'package:docuverse/features/auth/services/auth_service.dart';
+import 'package:docuverse/features/documents/services/file_storage_service.dart';
+import 'package:docuverse/shared/models/folder_model.dart';
+import 'package:docuverse/shared/models/file_model.dart';
+import 'package:docuverse/shared/constants/app_constants.dart';
+import 'package:docuverse/shared/widgets/bottom_navigation.dart';
+import 'package:docuverse/shared/widgets/app_logo.dart';
+import 'package:docuverse/features/documents/screens/folder_view.dart';
+import 'package:docuverse/shared/utils/file_utils.dart';
+import 'package:docuverse/features/documents/widgets/file_management_dialog.dart';
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});

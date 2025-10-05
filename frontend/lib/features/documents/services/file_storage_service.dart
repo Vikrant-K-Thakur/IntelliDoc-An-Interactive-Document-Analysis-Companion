@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/folder_model.dart';
-import '../models/file_model.dart';
+import '../../../shared/models/folder_model.dart';
+import '../../../shared/models/file_model.dart';
 
 class FileStorageService {
   static const String _foldersKey = 'user_folders';

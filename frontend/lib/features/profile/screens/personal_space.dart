@@ -1,11 +1,11 @@
 // screens/personal_space.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:docuverse/widgets/bottom_navigation.dart';
-import 'package:docuverse/widgets/app_logo.dart';
-import 'package:docuverse/screens/edit_profile.dart';
-import 'package:docuverse/services/auth_service.dart';
-import 'package:docuverse/constants/app_constants.dart';
+import 'package:docuverse/shared/widgets/bottom_navigation.dart';
+import 'package:docuverse/shared/widgets/app_logo.dart';
+import 'edit_profile.dart';
+import '../../auth/services/auth_service.dart';
+import '../../../shared/constants/app_constants.dart';
 
 class PersonalSpaceScreen extends StatefulWidget {
   const PersonalSpaceScreen({super.key});
@@ -33,21 +33,24 @@ class PersonalSpaceScreenContent extends StatefulWidget {
   const PersonalSpaceScreenContent({super.key});
 
   @override
-  State<PersonalSpaceScreenContent> createState() => _PersonalSpaceScreenContentState();
+  State<PersonalSpaceScreenContent> createState() =>
+      _PersonalSpaceScreenContentState();
 }
 
-class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent> {
+class _PersonalSpaceScreenContentState
+    extends State<PersonalSpaceScreenContent> {
   User? get currentUser => FirebaseAuth.instance.currentUser;
   final AuthService _authService = AuthService();
 
   String _getUserInitials(String? displayName) {
     if (displayName == null || displayName.isEmpty) return 'U';
-    
+
     List<String> nameParts = displayName.trim().split(' ');
     if (nameParts.length == 1) {
       return nameParts[0][0].toUpperCase();
     } else {
-      return '${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}'.toUpperCase();
+      return '${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}'
+          .toUpperCase();
     }
   }
 
@@ -85,11 +88,21 @@ class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent>
                 children: [
                   Row(
                     children: [
+                      // Back Arrow Button
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // App logo
                       const AppLogo(
                         size: 32,
                         showText: false,
                       ),
                       const SizedBox(width: 12),
+
+                      // Title
                       const Text(
                         'Personal Space',
                         style: TextStyle(
@@ -219,7 +232,8 @@ class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent>
                       'Your favorite documents',
                       Icons.star_border,
                       Colors.blue,
-                      onTap: () => Navigator.pushNamed(context, '/starred-items'),
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/starred-items'),
                     ),
                     const SizedBox(height: 12),
                     _buildMenuItem(
@@ -236,7 +250,6 @@ class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent>
                       Colors.blue,
                     ),
                     const SizedBox(height: 40),
-
                   ],
                 ),
               ),
@@ -247,7 +260,9 @@ class _PersonalSpaceScreenContentState extends State<PersonalSpaceScreenContent>
     );
   }
 
-  Widget _buildMenuItem(String title, String subtitle, IconData icon, Color iconColor, {VoidCallback? onTap}) {
+  Widget _buildMenuItem(
+      String title, String subtitle, IconData icon, Color iconColor,
+      {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap ?? () {},
       child: Container(

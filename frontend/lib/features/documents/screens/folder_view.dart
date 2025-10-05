@@ -1,12 +1,12 @@
 // screens/folder_view.dart
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../models/folder_model.dart';
-import '../models/file_model.dart';
+import '../../../shared/models/folder_model.dart';
+import '../../../shared/models/file_model.dart';
 import '../services/file_storage_service.dart';
-import '../constants/app_constants.dart';
-import '../services/auth_service.dart';
-import '../utils/file_utils.dart';
+import '../../../shared/constants/app_constants.dart';
+import '../../auth/services/auth_service.dart';
+import '../../../shared/utils/file_utils.dart';
 import '../widgets/file_management_dialog.dart';
 
 class FolderViewScreen extends StatefulWidget {

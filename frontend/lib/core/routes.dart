@@ -1,21 +1,21 @@
 // config/routes.dart
 import 'package:flutter/material.dart';
-import 'package:docuverse/screens/login.dart';
-import 'package:docuverse/screens/register.dart';
-import 'package:docuverse/screens/forget_password.dart';
+import 'package:docuverse/features/auth/screens/login.dart';
+import 'package:docuverse/features/auth/screens/register.dart';
+import 'package:docuverse/features/auth/screens/forget_password.dart';
 import 'package:docuverse/screens/onboarding.dart';
-import 'package:docuverse/screens/home.dart';
-import 'package:docuverse/screens/documents.dart';
-import 'package:docuverse/screens/study_tools.dart';
-import 'package:docuverse/screens/personal_space.dart';
-import 'package:docuverse/screens/main_container.dart';
+import 'package:docuverse/features/home/screens/home.dart';
+import 'package:docuverse/features/documents/screens/documents.dart';
+import 'package:docuverse/features/home/screens/study_tools.dart';
+import 'package:docuverse/features/profile/screens/personal_space.dart';
+import 'main_container.dart';
 import 'package:docuverse/screens/ai_document_interaction.dart';
 import 'package:docuverse/screens/collaboration_sharing.dart';
-import 'package:docuverse/screens/edit_profile.dart';
-import 'package:docuverse/screens/folder_view.dart';
-import 'package:docuverse/screens/starred_items.dart';
-import 'package:docuverse/constants/app_constants.dart';
-import 'package:docuverse/models/folder_model.dart';
+import 'package:docuverse/features/profile/screens/edit_profile.dart';
+import 'package:docuverse/features/documents/screens/folder_view.dart';
+import 'package:docuverse/features/documents/screens/starred_items.dart';
+import 'package:docuverse/shared/constants/app_constants.dart';
+import 'package:docuverse/shared/models/folder_model.dart';
 
 class AppRoutes {
   static Map<String, WidgetBuilder> get routes => {
