@@ -1,9 +1,9 @@
-// screens/main_container.dart
+// core/main_container.dart
 import 'package:flutter/material.dart';
-import 'package:docuverse/screens/home.dart';
-import 'package:docuverse/screens/documents.dart';
-import 'package:docuverse/screens/study_tools.dart';
-import 'package:docuverse/screens/personal_space.dart';
+import '../features/home/screens/home.dart';
+import '../features/documents/screens/documents.dart';
+import '../features/home/screens/study_tools.dart';
+import '../features/profile/screens/personal_space.dart';
 
 class MainContainer extends StatefulWidget {
   final int initialIndex;
@@ -48,11 +48,11 @@ class _MainContainerState extends State<MainContainer> {
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
-        children: const [
-          HomeScreenContent(),
-          DocumentsScreenContent(),
-          StudyToolsScreenContent(),
-          PersonalSpaceScreenContent(),
+        children: [
+          const HomeScreenContent(),
+          const DocumentsScreenContent(),
+          const StudyToolsScreenContent(),
+          const PersonalSpaceScreenContent(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
