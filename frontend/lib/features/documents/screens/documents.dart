@@ -1,13 +1,13 @@
 // screens/documents.dart
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:docuverse/features/auth/services/auth_service.dart';
+import 'package:docuverse/services/auth_service.dart';
 import 'package:docuverse/features/documents/services/file_storage_service.dart';
 import 'package:docuverse/shared/models/folder_model.dart';
 import 'package:docuverse/shared/models/file_model.dart';
-import 'package:docuverse/shared/constants/app_constants.dart';
+import 'package:docuverse/constants/app_constants.dart';
 import 'package:docuverse/shared/widgets/bottom_navigation.dart';
-import 'package:docuverse/shared/widgets/app_logo.dart';
+import 'package:docuverse/widgets/app_logo.dart';
 import 'package:docuverse/features/documents/screens/folder_view.dart';
 import 'package:docuverse/shared/utils/file_utils.dart';
 import 'package:docuverse/features/documents/widgets/file_management_dialog.dart';
@@ -44,11 +44,46 @@ class DocumentsScreenContent extends StatefulWidget {
 class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
   List<FolderModel> folders = [];
   List<FileModel> uploadedFiles = [];
+  List<FolderModel> filteredFolders = [];
+  List<FileModel> filteredFiles = [];
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase();
+      _filterData();
+    });
+  }
+
+  void _filterData() {
+    if (_searchQuery.isEmpty) {
+      filteredFolders = List.from(folders);
+      filteredFiles = List.from(uploadedFiles);
+    } else {
+      filteredFolders = folders.where((folder) {
+        return folder.name.toLowerCase().contains(_searchQuery);
+      }).toList();
+      
+      filteredFiles = uploadedFiles.where((file) {
+        return file.name.toLowerCase().contains(_searchQuery) ||
+               file.type.toLowerCase().contains(_searchQuery);
+      }).toList();
+    }
   }
 
   Future<void> _loadData() async {
@@ -58,6 +93,7 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
     setState(() {
       folders = loadedFolders;
       uploadedFiles = loadedFiles;
+      _filterData();
     });
   }
 
@@ -336,10 +372,19 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                   children: [
                     // Search Bar
                     TextField(
+                      controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: 'Search documents...',
+                        hintText: 'Search documents and folders...',
                         hintStyle: TextStyle(color: Colors.grey[400]),
                         prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(Icons.clear, color: Colors.grey[400]),
+                                onPressed: () {
+                                  _searchController.clear();
+                                },
+                              )
+                            : null,
                         filled: true,
                         fillColor: Colors.grey[100],
                         border: OutlineInputBorder(
@@ -446,8 +491,35 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                     ),
                     const SizedBox(height: 20),
 
+                    // Search Results Info
+                    if (_searchQuery.isNotEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, size: 16, color: Colors.blue[600]),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Found ${filteredFolders.length} folders and ${filteredFiles.length} files',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.blue[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
                     // Document Folders
-                    ...folders.map((folder) {
+                    ...filteredFolders.map((folder) {
                       return Column(
                         children: [
                           DragTarget<Map<String, dynamic>>(
@@ -557,18 +629,18 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                     }).toList(),
                     
                     // Uploaded Files Section
-                    if (uploadedFiles.isNotEmpty) ...[
+                    if (filteredFiles.isNotEmpty) ...[
                       const SizedBox(height: 20),
-                      const Text(
-                        'Uploaded Files',
-                        style: TextStyle(
+                      Text(
+                        _searchQuery.isNotEmpty ? 'Matching Files' : 'Uploaded Files',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.black,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ...uploadedFiles.map((file) => Column(
+                      ...filteredFiles.map((file) => Column(
                         children: [
                           Draggable<Map<String, dynamic>>(
                             data: {'type': 'file', 'id': file.id},
@@ -619,6 +691,40 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                           const SizedBox(height: 8),
                         ],
                       )).toList(),
+                    ],
+
+                    // No Results Message
+                    if (_searchQuery.isNotEmpty && filteredFolders.isEmpty && filteredFiles.isEmpty) ...[
+                      const SizedBox(height: 40),
+                      Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.search_off,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No results found',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Try searching with different keywords',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
                     ],
                     
                     const SizedBox(height: 30),

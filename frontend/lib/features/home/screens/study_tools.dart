@@ -1,9 +1,9 @@
 // screens/study_tools.dart
 import 'package:flutter/material.dart';
-import '../../auth/services/auth_service.dart';
-import '../../../shared/constants/app_constants.dart';
-import '../../../shared/widgets/bottom_navigation.dart';
-import '../../../shared/widgets/app_logo.dart';
+import 'package:docuverse/services/auth_service.dart';
+import 'package:docuverse/constants/app_constants.dart';
+import 'package:docuverse/shared/widgets/bottom_navigation.dart';
+import 'package:docuverse/widgets/app_logo.dart';
 
 class StudyToolsScreen extends StatefulWidget {
   const StudyToolsScreen({super.key});

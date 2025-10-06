@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-// import '../../../shared/utils/validators.dart';
+import 'package:docuverse/services/auth_service.dart';
+import 'package:docuverse/utils/validators.dart';
 
 class ForgetPasswordScreen extends StatefulWidget {
   const ForgetPasswordScreen({super.key});
@@ -101,15 +101,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                 height: 50,
                 child: TextFormField(
                   controller: _emailController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Email is required';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Enter a valid email address';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validateEmail,
                   decoration: const InputDecoration(
                     hintText: 'john.doe@example.com',
                     border: OutlineInputBorder(),

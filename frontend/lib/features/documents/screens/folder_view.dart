@@ -1,13 +1,13 @@
 // screens/folder_view.dart
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../../shared/models/folder_model.dart';
-import '../../../shared/models/file_model.dart';
-import '../services/file_storage_service.dart';
-import '../../../shared/constants/app_constants.dart';
-import '../../auth/services/auth_service.dart';
-import '../../../shared/utils/file_utils.dart';
-import '../widgets/file_management_dialog.dart';
+import 'package:docuverse/shared/models/folder_model.dart';
+import 'package:docuverse/shared/models/file_model.dart';
+import 'package:docuverse/features/documents/services/file_storage_service.dart';
+import 'package:docuverse/constants/app_constants.dart';
+import 'package:docuverse/services/auth_service.dart';
+import 'package:docuverse/shared/utils/file_utils.dart';
+import 'package:docuverse/features/documents/widgets/file_management_dialog.dart';
 
 class FolderViewScreen extends StatefulWidget {
   final FolderModel folder;
@@ -21,11 +21,46 @@ class FolderViewScreen extends StatefulWidget {
 class _FolderViewScreenState extends State<FolderViewScreen> {
   List<FileModel> folderFiles = [];
   List<FolderModel> subfolders = [];
+  List<FileModel> filteredFiles = [];
+  List<FolderModel> filteredSubfolders = [];
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _loadFolderContent();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase();
+      _filterContent();
+    });
+  }
+
+  void _filterContent() {
+    if (_searchQuery.isEmpty) {
+      filteredFiles = List.from(folderFiles);
+      filteredSubfolders = List.from(subfolders);
+    } else {
+      filteredFiles = folderFiles.where((file) {
+        return file.name.toLowerCase().contains(_searchQuery) ||
+               file.type.toLowerCase().contains(_searchQuery);
+      }).toList();
+      
+      filteredSubfolders = subfolders.where((folder) {
+        return folder.name.toLowerCase().contains(_searchQuery);
+      }).toList();
+    }
   }
 
   Future<void> _loadFolderContent() async {
@@ -34,6 +69,7 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
     setState(() {
       folderFiles = files;
       subfolders = folders;
+      _filterContent();
     });
   }
 
@@ -209,7 +245,40 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
           ),
         ],
       ),
-      body: (folderFiles.isEmpty && subfolders.isEmpty)
+      body: Column(
+        children: [
+          // Search Bar
+          if (folderFiles.isNotEmpty || subfolders.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search in ${widget.folder.name}...',
+                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.clear, color: Colors.grey[400]),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          
+          // Content
+          Expanded(
+            child: (folderFiles.isEmpty && subfolders.isEmpty)
           ? const Padding(
               padding: EdgeInsets.all(20),
               child: Center(
@@ -241,12 +310,75 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
                 ),
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: subfolders.length + folderFiles.length,
-              itemBuilder: (context, index) {
-                if (index < subfolders.length) {
-                  final folder = subfolders[index];
+          : Column(
+              children: [
+                // Search Results Info
+                if (_searchQuery.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue[200]!),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 16, color: Colors.blue[600]),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Found ${filteredSubfolders.length} folders and ${filteredFiles.length} files',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.blue[700],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                
+                // Content List
+                Expanded(
+                  child: (filteredFiles.isEmpty && filteredSubfolders.isEmpty && _searchQuery.isNotEmpty)
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No results found',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Try searching with different keywords',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(20),
+                          itemCount: filteredSubfolders.length + filteredFiles.length,
+                          itemBuilder: (context, index) {
+                if (index < filteredSubfolders.length) {
+                  final folder = filteredSubfolders[index];
                   return Column(
                     children: [
                       DragTarget<Map<String, dynamic>>(
@@ -321,7 +453,7 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
                     ],
                   );
                 } else {
-                  final file = folderFiles[index - subfolders.length];
+                  final file = filteredFiles[index - filteredSubfolders.length];
                   return Column(
                     children: [
                       Draggable<Map<String, dynamic>>(
@@ -362,8 +494,14 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
                     ],
                   );
                 }
-              },
+                          },
+                        ),
+                ),
+              ],
             ),
+          ),
+        ],
+      ),
     );
   }
 

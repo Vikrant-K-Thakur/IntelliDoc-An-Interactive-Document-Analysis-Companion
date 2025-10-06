@@ -1,10 +1,13 @@
 // screens/home.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../auth/services/auth_service.dart';
-import '../../../shared/constants/app_constants.dart';
-import '../../../shared/widgets/bottom_navigation.dart';
-import '../../../shared/widgets/app_logo.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:docuverse/services/auth_service.dart';
+import 'package:docuverse/constants/app_constants.dart';
+import 'package:docuverse/shared/widgets/bottom_navigation.dart';
+import 'package:docuverse/widgets/app_logo.dart';
+import 'package:docuverse/features/documents/services/file_storage_service.dart';
+import 'package:docuverse/shared/models/file_model.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -75,6 +78,64 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         ],
       ),
     );
+  }
+
+  Future<void> _uploadFile() async {
+    if (!AuthService.isLoggedIn) {
+      _showLoginDialog();
+      return;
+    }
+
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png'],
+      );
+
+      if (result != null) {
+        List<FileModel> newFiles = [];
+        
+        for (var file in result.files) {
+          final fileModel = FileModel(
+            id: DateTime.now().millisecondsSinceEpoch.toString() + file.name.hashCode.toString(),
+            name: file.name,
+            path: file.path ?? '',
+            type: file.extension ?? '',
+            size: file.size,
+            uploadedAt: DateTime.now(),
+          );
+          newFiles.add(fileModel);
+        }
+        
+        await FileStorageService.addFiles(newFiles);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${result.files.length} file(s) uploaded successfully'),
+              backgroundColor: Colors.green,
+              action: SnackBarAction(
+                label: 'View',
+                textColor: Colors.white,
+                onPressed: () {
+                  Navigator.pushNamed(context, AppConstants.documentsRoute);
+                },
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to upload files'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -162,7 +223,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                           child: _buildActionCard(
                             'Upload File',
                             Icons.upload_file_outlined,
-                            () => _checkAuthAndNavigate('/upload'),
+                            _uploadFile,
                           ),
                         ),
                         const SizedBox(width: 12),

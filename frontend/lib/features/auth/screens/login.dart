@@ -1,9 +1,9 @@
 // screens/login.dart
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../../../shared/constants/app_constants.dart';
-import '../../../shared/utils/validators.dart';
-// import 'package:docuverse/widgets/app_logo.dart';
+import 'package:docuverse/services/auth_service.dart';
+import 'package:docuverse/constants/app_constants.dart';
+import 'package:docuverse/utils/validators.dart';
+import 'package:docuverse/widgets/app_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -103,12 +103,12 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                // const Center(
-                //   child: AppLogo(
-                //     size: 80,
-                //     showText: false,
-                //   ),
-                // ),
+                const Center(
+                  child: AppLogo(
+                    size: 80,
+                    showText: false,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 const Center(
                   child: Text(

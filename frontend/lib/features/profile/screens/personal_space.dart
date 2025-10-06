@@ -2,10 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:docuverse/shared/widgets/bottom_navigation.dart';
-import 'package:docuverse/shared/widgets/app_logo.dart';
+import 'package:docuverse/widgets/app_logo.dart';
 import 'edit_profile.dart';
-import '../../auth/services/auth_service.dart';
-import '../../../shared/constants/app_constants.dart';
+import 'package:docuverse/services/auth_service.dart';
+import 'package:docuverse/constants/app_constants.dart';
 
 class PersonalSpaceScreen extends StatefulWidget {
   const PersonalSpaceScreen({super.key});
@@ -88,11 +88,6 @@ class _PersonalSpaceScreenContentState
                 children: [
                   Row(
                     children: [
-                      // Back Arrow Button
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.black),
-                        onPressed: () => Navigator.pop(context),
-                      ),
                       const SizedBox(width: 8),
 
                       // App logo

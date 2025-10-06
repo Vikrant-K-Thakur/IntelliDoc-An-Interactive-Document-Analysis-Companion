@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../shared/models/folder_model.dart';
-import '../../../shared/models/file_model.dart';
-import '../services/file_storage_service.dart';
+import 'package:docuverse/shared/models/folder_model.dart';
+import 'package:docuverse/shared/models/file_model.dart';
+import 'package:docuverse/features/documents/services/file_storage_service.dart';
 
 class FileManagementDialog extends StatefulWidget {
   final FileModel file;
