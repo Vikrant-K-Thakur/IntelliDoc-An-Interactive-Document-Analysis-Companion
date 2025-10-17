@@ -49,6 +49,11 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
   List<FileModel> filteredFiles = [];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _sortBy = 'name'; // name, date, size, type
+  bool _sortAscending = true;
+  Set<String> _selectedFileTypes = <String>{};
+  bool _showStarredOnly = false;
+  DateTimeRange? _dateRange;
 
   @override
   void initState() {
@@ -72,18 +77,83 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
   }
 
   void _filterData() {
-    if (_searchQuery.isEmpty) {
-      filteredFolders = List.from(folders);
-      filteredFiles = List.from(uploadedFiles);
-    } else {
-      filteredFolders = folders.where((folder) {
+    // Start with all data
+    List<FolderModel> tempFolders = List<FolderModel>.from(folders);
+    List<FileModel> tempFiles = List<FileModel>.from(uploadedFiles);
+    
+    // Apply search filter
+    if (_searchQuery.isNotEmpty) {
+      tempFolders = tempFolders.where((folder) {
         return folder.name.toLowerCase().contains(_searchQuery);
       }).toList();
       
-      filteredFiles = uploadedFiles.where((file) {
+      tempFiles = tempFiles.where((file) {
         return file.name.toLowerCase().contains(_searchQuery) ||
                file.type.toLowerCase().contains(_searchQuery);
       }).toList();
+    }
+    
+    // Apply starred filter
+    if (_showStarredOnly) {
+      tempFolders = tempFolders.where((folder) => folder.isStarred).toList();
+      tempFiles = tempFiles.where((file) => file.isStarred).toList();
+    }
+    
+    // Apply file type filter
+    if (_selectedFileTypes.isNotEmpty) {
+      tempFiles = tempFiles.where((file) {
+        return _selectedFileTypes.contains(file.type.toLowerCase());
+      }).toList();
+    }
+    
+    // Apply date range filter
+    if (_dateRange != null) {
+      tempFolders = tempFolders.where((folder) {
+        return folder.createdAt.isAfter(_dateRange!.start.subtract(const Duration(days: 1))) &&
+               folder.createdAt.isBefore(_dateRange!.end.add(const Duration(days: 1)));
+      }).toList();
+      
+      tempFiles = tempFiles.where((file) {
+        return file.uploadedAt.isAfter(_dateRange!.start.subtract(const Duration(days: 1))) &&
+               file.uploadedAt.isBefore(_dateRange!.end.add(const Duration(days: 1)));
+      }).toList();
+    }
+    
+    // Apply sorting
+    _sortData(tempFolders, tempFiles);
+    
+    filteredFolders = tempFolders;
+    filteredFiles = tempFiles;
+  }
+  
+  void _sortData(List<FolderModel> folders, List<FileModel> files) {
+    switch (_sortBy) {
+      case 'name':
+        folders.sort((a, b) => _sortAscending 
+            ? a.name.toLowerCase().compareTo(b.name.toLowerCase())
+            : b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+        files.sort((a, b) => _sortAscending 
+            ? a.name.toLowerCase().compareTo(b.name.toLowerCase())
+            : b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+        break;
+      case 'date':
+        folders.sort((a, b) => _sortAscending 
+            ? a.createdAt.compareTo(b.createdAt)
+            : b.createdAt.compareTo(a.createdAt));
+        files.sort((a, b) => _sortAscending 
+            ? a.uploadedAt.compareTo(b.uploadedAt)
+            : b.uploadedAt.compareTo(a.uploadedAt));
+        break;
+      case 'size':
+        files.sort((a, b) => _sortAscending 
+            ? a.size.compareTo(b.size)
+            : b.size.compareTo(a.size));
+        break;
+      case 'type':
+        files.sort((a, b) => _sortAscending 
+            ? a.type.toLowerCase().compareTo(b.type.toLowerCase())
+            : b.type.toLowerCase().compareTo(a.type.toLowerCase()));
+        break;
     }
   }
 
@@ -279,6 +349,221 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
     );
   }
 
+  void _showSortOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Sort By',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            _buildSortOption('Name', 'name', Icons.sort_by_alpha),
+            _buildSortOption('Date', 'date', Icons.access_time),
+            _buildSortOption('Size', 'size', Icons.storage),
+            _buildSortOption('Type', 'type', Icons.category),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const Text('Order: ', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(width: 10),
+                ChoiceChip(
+                  label: const Text('Ascending'),
+                  selected: _sortAscending,
+                  onSelected: (selected) {
+                    setState(() {
+                      _sortAscending = true;
+                      _filterData();
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+                const SizedBox(width: 10),
+                ChoiceChip(
+                  label: const Text('Descending'),
+                  selected: !_sortAscending,
+                  onSelected: (selected) {
+                    setState(() {
+                      _sortAscending = false;
+                      _filterData();
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortOption(String title, String value, IconData icon) {
+    return ListTile(
+      leading: Icon(icon, color: _sortBy == value ? Colors.blue : Colors.grey),
+      title: Text(title),
+      trailing: _sortBy == value ? const Icon(Icons.check, color: Colors.blue) : null,
+      onTap: () {
+        setState(() {
+          _sortBy = value;
+          _filterData();
+        });
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  void _showFilterOptions() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Filter Options',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedFileTypes.clear();
+                        _showStarredOnly = false;
+                        _dateRange = null;
+                        _filterData();
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Clear All'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  children: [
+                    // Starred Filter
+                    SwitchListTile(
+                      title: const Text('Show Starred Only'),
+                      subtitle: const Text('Display only starred items'),
+                      value: _showStarredOnly,
+                      onChanged: (value) {
+                        setState(() {
+                          _showStarredOnly = value;
+                          _filterData();
+                        });
+                      },
+                    ),
+                    const Divider(),
+                    
+                    // File Type Filter
+                    const Text(
+                      'File Types',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      children: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png']
+                          .map((type) => FilterChip(
+                                label: Text(type.toUpperCase()),
+                                selected: _selectedFileTypes.contains(type),
+                                onSelected: (selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      _selectedFileTypes.add(type);
+                                    } else {
+                                      _selectedFileTypes.remove(type);
+                                    }
+                                    _filterData();
+                                  });
+                                },
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    const Divider(),
+                    
+                    // Date Range Filter
+                    const Text(
+                      'Date Range',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 10),
+                    ListTile(
+                      leading: const Icon(Icons.date_range),
+                      title: Text(_dateRange == null 
+                          ? 'Select Date Range' 
+                          : '${_dateRange!.start.day}/${_dateRange!.start.month}/${_dateRange!.start.year} - ${_dateRange!.end.day}/${_dateRange!.end.month}/${_dateRange!.end.year}'),
+                      trailing: _dateRange != null 
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                setState(() {
+                                  _dateRange = null;
+                                  _filterData();
+                                });
+                              },
+                            )
+                          : null,
+                      onTap: () async {
+                        final picked = await showDateRangePicker(
+                          context: context,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                          initialDateRange: _dateRange,
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _dateRange = picked;
+                            _filterData();
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Apply Filters', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _handleDrop(Map<String, dynamic> data, String targetFolderId) async {
     if (data['type'] == 'file') {
       await FileStorageService.moveFileToFolder(data['id'], targetFolderId);
@@ -458,17 +743,17 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                     // Sort, Filter and New Folder buttons
                     Row(
                       children: [
-                        _buildFilterButton('Sort By', Icons.sort),
+                        _buildFilterButton('Sort By', Icons.sort, onTap: _showSortOptions),
                         const SizedBox(width: 10),
-                        _buildFilterButton('Filter', Icons.filter_list),
+                        _buildFilterButton('Filter', Icons.filter_list, onTap: _showFilterOptions),
                         const SizedBox(width: 10),
                         _buildFilterButton('New Folder', Icons.create_new_folder, onTap: _createNewFolder),
                       ],
                     ),
                     const SizedBox(height: 20),
 
-                    // Search Results Info
-                    if (_searchQuery.isNotEmpty) ...[
+                    // Filter Status and Search Results Info
+                    if (_searchQuery.isNotEmpty || _selectedFileTypes.isNotEmpty || _showStarredOnly || _dateRange != null) ...[
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                         decoration: BoxDecoration(
@@ -476,18 +761,53 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: Colors.blue[200]!),
                         ),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.info_outline, size: 16, color: Colors.blue[600]),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Found ${filteredFolders.length} folders and ${filteredFiles.length} files',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.blue[700],
-                                fontWeight: FontWeight.w500,
-                              ),
+                            Row(
+                              children: [
+                                Icon(Icons.info_outline, size: 16, color: Colors.blue[600]),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Found ${filteredFolders.length} folders and ${filteredFiles.length} files',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.blue[700],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
+                            if (_selectedFileTypes.isNotEmpty || _showStarredOnly || _dateRange != null) ...[
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: [
+                                  if (_showStarredOnly)
+                                    _buildActiveFilterChip('Starred Only', () {
+                                      setState(() {
+                                        _showStarredOnly = false;
+                                        _filterData();
+                                      });
+                                    }),
+                                  ..._selectedFileTypes.map((type) => 
+                                    _buildActiveFilterChip(type.toUpperCase(), () {
+                                      setState(() {
+                                        _selectedFileTypes.remove(type);
+                                        _filterData();
+                                      });
+                                    })),
+                                  if (_dateRange != null)
+                                    _buildActiveFilterChip('Date Range', () {
+                                      setState(() {
+                                        _dateRange = null;
+                                        _filterData();
+                                      });
+                                    }),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -559,9 +879,7 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                                         return false;
                                       },
                                       child: _buildFolderItem(
-                                        folder.name,
-                                        folder.documentCount,
-                                        Icons.folder_open,
+                                        folder,
                                         onTap: () => _openFolder(folder),
                                         onRename: () => _renameFolder(folder),
                                       ),
@@ -588,9 +906,7 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                                       return false;
                                     },
                                     child: _buildFolderItem(
-                                      folder.name,
-                                      folder.documentCount,
-                                      Icons.folder_open,
+                                      folder,
                                       onTap: () => _openFolder(folder),
                                       onRename: () => _renameFolder(folder),
                                     ),
@@ -670,19 +986,20 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                     ],
 
                     // No Results Message
-                    if (_searchQuery.isNotEmpty && filteredFolders.isEmpty && filteredFiles.isEmpty) ...[
+                    if ((_searchQuery.isNotEmpty || _selectedFileTypes.isNotEmpty || _showStarredOnly || _dateRange != null) && 
+                        filteredFolders.isEmpty && filteredFiles.isEmpty) ...[
                       const SizedBox(height: 40),
                       Center(
                         child: Column(
                           children: [
                             Icon(
-                              Icons.search_off,
+                              _searchQuery.isNotEmpty ? Icons.search_off : Icons.filter_list_off,
                               size: 64,
                               color: Colors.grey[400],
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'No results found',
+                              _searchQuery.isNotEmpty ? 'No results found' : 'No items match your filters',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
@@ -691,7 +1008,9 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Try searching with different keywords',
+                              _searchQuery.isNotEmpty 
+                                  ? 'Try searching with different keywords'
+                                  : 'Try adjusting your filter settings',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[500],
@@ -715,26 +1034,86 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
   }
 
   Widget _buildFilterButton(String text, IconData icon, {VoidCallback? onTap}) {
+    bool isActive = false;
+    
+    if (text == 'Sort By') {
+      isActive = _sortBy != 'name' || !_sortAscending;
+    } else if (text == 'Filter') {
+      isActive = _selectedFileTypes.isNotEmpty || _showStarredOnly || _dateRange != null;
+    }
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.grey[300]!),
+          color: isActive ? Colors.blue[50] : Colors.white,
+          border: Border.all(color: isActive ? Colors.blue : Colors.grey[300]!),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: Colors.black87),
+            Icon(
+              icon, 
+              size: 18, 
+              color: isActive ? Colors.blue : Colors.black87,
+            ),
             const SizedBox(width: 6),
             Text(
               text,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 14, 
+                fontWeight: FontWeight.w500,
+                color: isActive ? Colors.blue : Colors.black87,
+              ),
             ),
+            if (isActive) ...[
+              const SizedBox(width: 4),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: Colors.blue,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildActiveFilterChip(String label, VoidCallback onRemove) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.blue[100],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue[300]!),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.blue[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: onRemove,
+            child: Icon(
+              Icons.close,
+              size: 14,
+              color: Colors.blue[700],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -804,7 +1183,7 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
     );
   }
 
-  Widget _buildFolderItem(String title, String subtitle, IconData icon, {VoidCallback? onTap, VoidCallback? onRename}) {
+  Widget _buildFolderItem(FolderModel folder, {VoidCallback? onTap, VoidCallback? onRename}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -823,14 +1202,14 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 32, color: Colors.blue),
+            Icon(Icons.folder_open, size: 32, color: Colors.blue),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    folder.name,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -839,7 +1218,7 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    subtitle,
+                    folder.documentCount,
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
@@ -850,42 +1229,28 @@ class _DocumentsScreenContentState extends State<DocumentsScreenContent> {
               children: [
                 GestureDetector(
                   onTap: () async {
-                    final folder = folders.firstWhere((f) => f.name == title);
                     await FileStorageService.toggleFolderStar(folder.id);
                     _loadData();
                   },
-                  child: Builder(
-                    builder: (context) {
-                      final folder = folders.firstWhere((f) => f.name == title);
-                      return Icon(
-                        folder.isStarred ? Icons.star : Icons.star_border,
-                        size: 24,
-                        color: folder.isStarred ? Colors.amber : Colors.grey[500],
-                      );
-                    },
+                  child: Icon(
+                    folder.isStarred ? Icons.star : Icons.star_border,
+                    size: 24,
+                    color: folder.isStarred ? Colors.amber : Colors.grey[500],
                   ),
                 ),
                 const SizedBox(width: 12),
                 GestureDetector(
-                  onTap: () {
-                    final folder = folders.firstWhere((f) => f.name == title);
-                    _renameFolder(folder);
-                  },
+                  onTap: () => _renameFolder(folder),
                   child: Icon(Icons.edit, size: 24, color: Colors.grey[600]),
                 ),
                 const SizedBox(width: 12),
                 GestureDetector(
-                  onTap: () {
-                    final folder = folders.firstWhere((f) => f.name == title);
-                    _showFolderMoreOptions(folder);
-                  },
+                  onTap: () => _showFolderMoreOptions(folder),
                   child: Icon(Icons.more_vert, size: 24, color: Colors.grey[600]),
                 ),
                 const SizedBox(width: 12),
                 GestureDetector(
-                  onTap: () {
-                    onTap?.call();
-                  },
+                  onTap: onTap,
                   child: Icon(Icons.folder_open, size: 24, color: Colors.blue),
                 ),
               ],
