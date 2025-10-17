@@ -8,6 +8,8 @@ import 'package:docuverse/shared/widgets/bottom_navigation.dart';
 import 'package:docuverse/widgets/app_logo.dart';
 import 'package:docuverse/features/documents/services/file_storage_service.dart';
 import 'package:docuverse/shared/models/file_model.dart';
+import 'package:docuverse/shared/models/folder_model.dart';
+import 'package:docuverse/shared/utils/file_utils.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -41,6 +43,42 @@ class HomeScreenContent extends StatefulWidget {
 
 class _HomeScreenContentState extends State<HomeScreenContent> {
   User? get currentUser => FirebaseAuth.instance.currentUser;
+  List<FileModel> recentFiles = [];
+  List<dynamic> starredItems = []; // Can contain both files and folders
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final allFiles = await FileStorageService.getFiles();
+      final starredFiles = await FileStorageService.getStarredFiles();
+      final starredFolders = await FileStorageService.getStarredFolders();
+      
+      // Get recent files (last 10 files sorted by upload date)
+      final recent = List<FileModel>.from(allFiles)
+        ..sort((a, b) => b.uploadedAt.compareTo(a.uploadedAt));
+      
+      // Combine starred files and folders
+      final combinedStarred = <dynamic>[];
+      combinedStarred.addAll(starredFiles);
+      combinedStarred.addAll(starredFolders);
+      
+      setState(() {
+        recentFiles = recent.take(6).toList(); // Reduced to prevent overflow
+        starredItems = combinedStarred.take(6).toList(); // Reduced to prevent overflow
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   String _getUserInitials(String? displayName) {
     if (displayName == null || displayName.isEmpty) return 'U';
@@ -109,6 +147,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         }
         
         await FileStorageService.addFiles(newFiles);
+        _loadData(); // Refresh data after upload
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -260,28 +299,34 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     
                     SizedBox(
                       height: 200,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          _buildDocumentCard(
-                            'Quantum Computing Basics',
-                            'Dec 12, 2023',
-                            'https://via.placeholder.com/150x200/E8EAF6/5C6BC0?text=Quantum',
-                          ),
-                          const SizedBox(width: 12),
-                          _buildDocumentCard(
-                            'AI in Healthcare: Ethical',
-                            'Jan 05, 2024',
-                            'https://via.placeholder.com/150x200/F3E5F5/8E24AA?text=AI+Health',
-                          ),
-                          const SizedBox(width: 12),
-                          _buildDocumentCard(
-                            'Machine Learning',
-                            'Feb 15, 2024',
-                            'https://via.placeholder.com/150x200/E0F2F1/00897B?text=ML',
-                          ),
-                        ],
-                      ),
+                      child: isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : recentFiles.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.description, size: 48, color: Colors.grey[400]),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'No recent documents',
+                                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.only(right: 12),
+                                  itemCount: recentFiles.length,
+                                  itemBuilder: (context, index) {
+                                    final file = recentFiles[index];
+                                    return Padding(
+                                      padding: EdgeInsets.only(right: index < recentFiles.length - 1 ? 12 : 0),
+                                      child: _buildDocumentCard(file),
+                                    );
+                                  },
+                                ),
                     ),
                     
                     const SizedBox(height: 30),
@@ -299,28 +344,36 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     
                     SizedBox(
                       height: 200,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          _buildStarredFileCard(
-                            'PhD Thesis Proposal Draft v3',
-                            'Apr 01, 2024',
-                            'https://via.placeholder.com/150x200/FFF3E0/F57C00?text=PhD',
-                          ),
-                          const SizedBox(width: 12),
-                          _buildStarredFileCard(
-                            'Project X - Q2 Financials',
-                            'Mar 28, 2024',
-                            'https://via.placeholder.com/150x200/E3F2FD/1976D2?text=Q2',
-                          ),
-                          const SizedBox(width: 12),
-                          _buildStarredFileCard(
-                            'Research Paper',
-                            'May 10, 2024',
-                            'https://via.placeholder.com/150x200/FCE4EC/C2185B?text=Research',
-                          ),
-                        ],
-                      ),
+                      child: isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : starredItems.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.star_border, size: 48, color: Colors.grey[400]),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'No starred items',
+                                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.only(right: 12),
+                                  itemCount: starredItems.length,
+                                  itemBuilder: (context, index) {
+                                    final item = starredItems[index];
+                                    return Padding(
+                                      padding: EdgeInsets.only(right: index < starredItems.length - 1 ? 12 : 0),
+                                      child: item is FileModel 
+                                          ? _buildStarredFileCard(item)
+                                          : _buildStarredFolderCard(item as FolderModel),
+                                    );
+                                  },
+                                ),
                     ),
                     
                     const SizedBox(height: 30),
@@ -376,7 +429,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -394,17 +447,21 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           children: [
             Icon(
               icon,
-              size: 28,
+              size: 24,
               color: Colors.black87,
             ),
-            const SizedBox(height: 8),
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
+            const SizedBox(height: 6),
+            Flexible(
+              child: Text(
+                text,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
               ),
             ),
           ],
@@ -413,172 +470,301 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
   }
 
-  Widget _buildDocumentCard(String title, String date, String imageUrl) {
-    return Container(
-      width: 160,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Container(
-              height: 120,
+  Widget _buildDocumentCard(FileModel file) {
+    final fileIcon = FileUtils.getFileIcon(file.name);
+    final fileColor = FileUtils.getFileColor(file.name);
+    final formattedDate = '${file.uploadedAt.day}/${file.uploadedAt.month}/${file.uploadedAt.year}';
+    
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, '/document-viewer', arguments: file);
+      },
+      child: Container(
+        width: 150,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 110,
               width: double.infinity,
               decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.grey[300]!,
-                    Colors.grey[200]!,
+                    fileColor.withOpacity(0.1),
+                    fileColor.withOpacity(0.05),
                   ],
                 ),
               ),
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.description, size: 40, color: Colors.grey),
-                  );
-                },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(fileIcon, size: 40, color: fileColor),
+                  const SizedBox(height: 6),
+                  Text(
+                    file.extension,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: fileColor,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    file.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  date,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
+                  const SizedBox(height: 3),
+                  Text(
+                    formattedDate,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[600],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStarredFileCard(String title, String date, String imageUrl) {
-    return Container(
-      width: 160,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: Container(
-                  height: 120,
+  Widget _buildStarredFileCard(FileModel file) {
+    final fileIcon = FileUtils.getFileIcon(file.name);
+    final fileColor = FileUtils.getFileColor(file.name);
+    final formattedDate = '${file.uploadedAt.day}/${file.uploadedAt.month}/${file.uploadedAt.year}';
+    
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, '/document-viewer', arguments: file);
+      },
+      child: Container(
+        width: 150,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                Container(
+                  height: 110,
                   width: double.infinity,
                   decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.grey[300]!,
-                        Colors.grey[200]!,
+                        fileColor.withOpacity(0.1),
+                        fileColor.withOpacity(0.05),
                       ],
                     ),
                   ),
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.folder, size: 40, color: Colors.grey),
-                      );
-                    },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(fileIcon, size: 40, color: fileColor),
+                      const SizedBox(height: 6),
+                      Text(
+                        file.extension,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: fileColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.star_border,
-                    size: 18,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  date,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.star,
+                      size: 16,
+                      color: Colors.amber,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    file.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    formattedDate,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStarredFolderCard(FolderModel folder) {
+    final formattedDate = '${folder.createdAt.day}/${folder.createdAt.month}/${folder.createdAt.year}';
+    
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, AppConstants.documentsRoute);
+      },
+      child: Container(
+        width: 150,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                Container(
+                  height: 110,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.blue.withOpacity(0.1),
+                        Colors.blue.withOpacity(0.05),
+                      ],
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.folder, size: 40, color: Colors.blue),
+                      const SizedBox(height: 6),
+                      Text(
+                        'FOLDER',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.star,
+                      size: 16,
+                      color: Colors.amber,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    folder.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    formattedDate,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
