@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:docuverse/shared/widgets/bottom_navigation.dart';
 import 'package:docuverse/widgets/app_logo.dart';
 import 'edit_profile.dart';
+import 'settings.dart';
 import 'package:docuverse/services/auth_service.dart';
 import 'package:docuverse/constants/app_constants.dart';
 
@@ -228,6 +229,14 @@ class _PersonalSpaceScreenContentState
                       'Manage profile, preferences & more',
                       Icons.settings_outlined,
                       Colors.blue,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SettingsScreen(),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     _buildMenuItem(
