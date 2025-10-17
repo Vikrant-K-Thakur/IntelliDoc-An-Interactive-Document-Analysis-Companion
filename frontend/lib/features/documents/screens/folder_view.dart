@@ -150,7 +150,7 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
   }
 
   void _showFileManagement(FileModel file) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
       builder: (context) => FileManagementDialog(
         file: file,
@@ -527,13 +527,13 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(_getFileIcon(file.name), size: 24, color: FileUtils.getFileColor(file.name)),
+              child: Icon(_getFileIcon(file.name), size: 28, color: FileUtils.getFileColor(file.name)),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -562,7 +562,7 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
                 if (onManage != null)
                   GestureDetector(
                     onTap: onManage,
-                    child: Icon(Icons.more_vert, size: 20, color: Colors.grey[600]),
+                    child: Icon(Icons.more_vert, size: 24, color: Colors.grey[600]),
                   ),
                 const SizedBox(width: 8),
                 GestureDetector(
@@ -572,11 +572,73 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
                   },
                   child: Icon(
                     file.isStarred ? Icons.star : Icons.star_border,
-                    size: 20,
+                    size: 24,
                     color: file.isStarred ? Colors.amber : Colors.blue,
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSubfolderMoreOptions(FolderModel folder) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.summarize, size: 24, color: Colors.blue),
+              title: const Text('Summarize Documents'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Summarize feature coming soon')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.quiz, size: 24, color: Colors.green),
+              title: const Text('Generate Quiz'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Quiz generation coming soon')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.school, size: 24, color: Colors.purple),
+              title: const Text('Study Plan'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Study plan feature coming soon')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.share, size: 24, color: Colors.orange),
+              title: const Text('Share Folder'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Share feature coming soon')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, size: 24, color: Colors.red),
+              title: const Text('Delete Folder', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(context);
+                _deleteSubfolder(folder);
+              },
             ),
           ],
         ),
@@ -610,7 +672,7 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
         ),
         child: Row(
           children: [
-            Icon(Icons.folder, size: 28, color: Colors.blue),
+            Icon(Icons.folder, size: 32, color: Colors.blue),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -642,18 +704,36 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
                   },
                   child: Icon(
                     folder.isStarred ? Icons.star : Icons.star_border,
-                    size: 18,
-                    color: folder.isStarred ? Colors.amber : Colors.grey[400],
+                    size: 24,
+                    color: folder.isStarred ? Colors.amber : Colors.grey[500],
                   ),
                 ),
-                const SizedBox(width: 8),
-                if (onRename != null)
-                  GestureDetector(
-                    onTap: onRename,
-                    child: Icon(Icons.edit, size: 18, color: Colors.grey[600]),
-                  ),
-                const SizedBox(width: 8),
-                Icon(Icons.chevron_right, size: 18, color: Colors.grey[400]),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () {
+                    _renameSubfolder(folder);
+                  },
+                  child: Icon(Icons.edit, size: 24, color: Colors.grey[600]),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () {
+                    _showSubfolderMoreOptions(folder);
+                  },
+                  child: Icon(Icons.more_vert, size: 24, color: Colors.grey[600]),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FolderViewScreen(folder: folder),
+                      ),
+                    );
+                  },
+                  child: Icon(Icons.folder_open, size: 24, color: Colors.blue),
+                ),
               ],
             ),
           ],

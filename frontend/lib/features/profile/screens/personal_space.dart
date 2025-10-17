@@ -179,39 +179,6 @@ class _PersonalSpaceScreenContentState
                     ),
                     const SizedBox(height: 30),
 
-                    // Account Section
-                    const Text(
-                      'Account',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildMenuItem(
-                      'Settings',
-                      'Manage profile, preferences & more',
-                      Icons.settings_outlined,
-                      Colors.blue,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildMenuItem(
-                      'Collaboration & Sharing',
-                      'View and manage shared documents',
-                      Icons.people_outline,
-                      Colors.blue,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildMenuItem(
-                      'Logout',
-                      'Sign out of your account',
-                      Icons.logout,
-                      Colors.red,
-                      onTap: _logout,
-                    ),
-                    const SizedBox(height: 30),
-
                     // My Content Section
                     const Text(
                       'My Content',
@@ -245,6 +212,40 @@ class _PersonalSpaceScreenContentState
                       Colors.blue,
                     ),
                     const SizedBox(height: 40),
+
+                     // Account Section
+                    const Text(
+                      'Account',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildMenuItem(
+                      'Settings',
+                      'Manage profile, preferences & more',
+                      Icons.settings_outlined,
+                      Colors.blue,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildMenuItem(
+                      'Collaboration & Sharing',
+                      'View and manage shared documents',
+                      Icons.people_outline,
+                      Colors.blue,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildMenuItem(
+                      'Logout',
+                      'Sign out of your account',
+                      Icons.logout,
+                      Colors.red,
+                      onTap: _logout,
+                    ),
+                    const SizedBox(height: 30),
+                    
                   ],
                 ),
               ),

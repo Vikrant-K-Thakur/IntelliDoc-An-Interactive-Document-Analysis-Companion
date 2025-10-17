@@ -18,6 +18,146 @@ class FileManagementDialog extends StatefulWidget {
 }
 
 class _FileManagementDialogState extends State<FileManagementDialog> {
+  Future<void> _deleteFile() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete File'),
+        content: Text('Are you sure you want to delete "${widget.file.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await FileStorageService.deleteFile(widget.file.id);
+              
+              if (widget.file.folderId != null) {
+                await FileStorageService.updateFolderFileCount(widget.file.folderId!);
+              }
+              
+              widget.onFileUpdated();
+              Navigator.pop(context);
+              Navigator.pop(context);
+              
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('File deleted successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMoveDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => _MoveFileDialog(
+        file: widget.file,
+        onFileUpdated: widget.onFileUpdated,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.summarize, size: 24, color: Colors.blue),
+            title: const Text('Summarize Document'),
+            onTap: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Document summarization coming soon')),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.quiz, size: 24, color: Colors.green),
+            title: const Text('Generate Quiz'),
+            onTap: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Quiz generation coming soon')),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.school, size: 24, color: Colors.purple),
+            title: const Text('Study Plan'),
+            onTap: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Study plan feature coming soon')),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.translate, size: 24, color: Colors.orange),
+            title: const Text('Translate Document'),
+            onTap: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Translation feature coming soon')),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.folder, size: 24, color: Colors.indigo),
+            title: const Text('Move to Folder'),
+            onTap: () {
+              Navigator.pop(context);
+              _showMoveDialog();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.share, size: 24, color: Colors.teal),
+            title: const Text('Share Document'),
+            onTap: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Share feature coming soon')),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete, size: 24, color: Colors.red),
+            title: const Text('Delete Document', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              Navigator.pop(context);
+              _deleteFile();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MoveFileDialog extends StatefulWidget {
+  final FileModel file;
+  final VoidCallback onFileUpdated;
+
+  const _MoveFileDialog({
+    required this.file,
+    required this.onFileUpdated,
+  });
+
+  @override
+  State<_MoveFileDialog> createState() => _MoveFileDialogState();
+}
+
+class _MoveFileDialogState extends State<_MoveFileDialog> {
   List<FolderModel> folders = [];
   String? selectedFolderId;
 
@@ -38,7 +178,6 @@ class _FileManagementDialogState extends State<FileManagementDialog> {
   Future<void> _moveFile() async {
     await FileStorageService.moveFileToFolder(widget.file.id, selectedFolderId);
     
-    // Update folder file counts
     if (widget.file.folderId != null) {
       await FileStorageService.updateFolderFileCount(widget.file.folderId!);
     }
@@ -57,57 +196,13 @@ class _FileManagementDialogState extends State<FileManagementDialog> {
     );
   }
 
-  Future<void> _deleteFile() async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete File'),
-        content: Text('Are you sure you want to delete "${widget.file.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await FileStorageService.deleteFile(widget.file.id);
-              
-              // Update folder file count if file was in a folder
-              if (widget.file.folderId != null) {
-                await FileStorageService.updateFolderFileCount(widget.file.folderId!);
-              }
-              
-              widget.onFileUpdated();
-              Navigator.pop(context); // Close delete dialog
-              Navigator.pop(context); // Close management dialog
-              
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('File deleted successfully'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Manage "${widget.file.name}"'),
+      title: Text('Move "${widget.file.name}"'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Move to folder:',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 12),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -138,22 +233,9 @@ class _FileManagementDialogState extends State<FileManagementDialog> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          const Text(
-            'File Details:',
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Text('Size: ${widget.file.formattedSize}'),
-          Text('Type: ${widget.file.extension}'),
-          Text('Uploaded: ${widget.file.uploadedAt.toString().split(' ')[0]}'),
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: _deleteFile,
-          child: const Text('Delete', style: TextStyle(color: Colors.red)),
-        ),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
