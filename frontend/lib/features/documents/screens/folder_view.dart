@@ -4,10 +4,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:docuverse/shared/models/folder_model.dart';
 import 'package:docuverse/shared/models/file_model.dart';
 import 'package:docuverse/features/documents/services/file_storage_service.dart';
-import 'package:docuverse/constants/app_constants.dart';
-import 'package:docuverse/services/auth_service.dart';
+// import 'package:docuverse/constants/app_constants.dart';
+// import 'package:docuverse/services/auth_service.dart';
 import 'package:docuverse/shared/utils/file_utils.dart';
 import 'package:docuverse/features/documents/widgets/file_management_dialog.dart';
+import 'package:docuverse/screens/document_viewer.dart';
 
 class FolderViewScreen extends StatefulWidget {
   final FolderModel folder;
@@ -122,32 +123,7 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
     return FileUtils.getFileIcon(fileName);
   }
 
-  void _checkAuthAndNavigate(String route) {
-    if (!AuthService.isLoggedIn) {
-      _showLoginDialog();
-    } else {
-      Navigator.pushNamed(context, route);
-    }
-  }
 
-  void _showLoginDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Login Required'),
-        content: const Text('Please login first to preview the app.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, AppConstants.loginRoute);
-            },
-            child: const Text('Login'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showFileManagement(FileModel file) {
     showModalBottomSheet(
@@ -508,7 +484,12 @@ class _FolderViewScreenState extends State<FolderViewScreen> {
   Widget _buildFileItem(FileModel file, {VoidCallback? onManage}) {
     return GestureDetector(
       onTap: () {
-        _checkAuthAndNavigate(AppConstants.aiDocumentRoute);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DocumentViewerScreen(file: file),
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(12),
