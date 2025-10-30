@@ -1,7 +1,7 @@
 // widgets/bottom_navigation.dart
 import 'package:flutter/material.dart';
 import 'package:docuverse/services/auth_service.dart';
-import 'package:docuverse/constants/app_constants.dart';
+import 'package:docuverse/shared/constants/app_constants.dart';
 
 class AppBottomNavigation extends StatelessWidget {
   final int currentIndex;

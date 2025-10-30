@@ -1,7 +1,7 @@
 // screens/login.dart
 import 'package:flutter/material.dart';
 import 'package:docuverse/services/auth_service.dart';
-import 'package:docuverse/constants/app_constants.dart';
+import 'package:docuverse/shared/constants/app_constants.dart';
 import 'package:docuverse/utils/validators.dart';
 import 'package:docuverse/widgets/app_logo.dart';
 
@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 8),
                 const Center(
                   child: Text(
-                    'Access your IntelliDoc AI account',
+                    'Access your IntelliDoc account',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey,

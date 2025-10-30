@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:docuverse/services/auth_service.dart';
-import 'package:docuverse/constants/app_constants.dart';
+import 'package:docuverse/shared/constants/app_constants.dart';
 import 'package:docuverse/shared/widgets/bottom_navigation.dart';
 import 'package:docuverse/widgets/app_logo.dart';
 import 'package:docuverse/features/documents/services/file_storage_service.dart';

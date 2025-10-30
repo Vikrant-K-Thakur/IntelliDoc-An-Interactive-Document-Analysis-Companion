@@ -11,11 +11,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const DocuSenseAIApp());
+  runApp(const IntelliDocApp());
 }
 
-class DocuSenseAIApp extends StatelessWidget {
-  const DocuSenseAIApp({super.key});
+class IntelliDocApp extends StatelessWidget {
+  const IntelliDocApp({super.key});
 
   @override
   Widget build(BuildContext context) {

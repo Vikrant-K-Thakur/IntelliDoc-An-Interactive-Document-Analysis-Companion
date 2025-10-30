@@ -12,7 +12,7 @@ import 'package:docuverse/main.dart';
 void main() {
   testWidgets('App starts with onboarding screen', (WidgetTester tester) async {
     // Build our app and trigger a frame
-    await tester.pumpWidget(const DocuSenseAIApp());
+    await tester.pumpWidget(const IntelliDocApp());
 
     // Verify that the app starts
     expect(find.byType(MaterialApp), findsOneWidget);

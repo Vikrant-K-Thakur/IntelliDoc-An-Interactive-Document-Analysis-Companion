@@ -44,9 +44,9 @@ flutter_icons:
 
 flutter:
   uses-material-design: true
+  # Ensure all asset directories exist before building
   assets:
     - assets/
     - assets/fonts/
     - assets/icons/
     - assets/sample_docs/
-    - .env

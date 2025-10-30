@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:docuverse/services/auth_service.dart';
-import 'package:docuverse/constants/app_constants.dart';
+import 'package:docuverse/shared/constants/app_constants.dart';
 import 'package:docuverse/utils/validators.dart';
 import 'package:docuverse/widgets/app_logo.dart';
 
@@ -108,7 +108,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 20),
               const Center(
                 child: Text(
-                  'Join DocuSense AI today and streamline your\ndocument management.',
+                  'Join IntelliDoc today and streamline your\ndocument management.',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey,

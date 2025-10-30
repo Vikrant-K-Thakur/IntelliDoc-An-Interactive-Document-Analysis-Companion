@@ -48,7 +48,7 @@ class AppLogo extends StatelessWidget {
         if (showText) ...[
           SizedBox(height: size * 0.15),
           Text(
-            'DocuSenseAI',
+            'IntelliDoc',
             style: TextStyle(
               fontSize: textSize,
               fontWeight: FontWeight.bold,
