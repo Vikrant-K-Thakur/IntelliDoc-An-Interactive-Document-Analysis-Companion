@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:docuverse/shared/models/file_model.dart';
 import 'package:pdfx/pdfx.dart';
 import 'dart:io';
@@ -14,6 +15,21 @@ class DocumentViewerScreen extends StatefulWidget {
 
 class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   PdfController? _pdfController;
+=======
+import 'package:pdfx/pdfx.dart';
+
+import '../models/document_model.dart';
+
+class DocumentViewer extends StatefulWidget {
+  const DocumentViewer({super.key});
+
+  @override
+  State<DocumentViewer> createState() => _DocumentViewerState();
+}
+
+class _DocumentViewerState extends State<DocumentViewer> {
+  late PdfController _pdfController;
+>>>>>>> 17955a8 (Updated project)
   bool _isLoading = true;
   String? _error;
 
@@ -23,6 +39,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     _loadDocument();
   }
 
+<<<<<<< HEAD
   @override
   void dispose() {
     _pdfController?.dispose();
@@ -52,10 +69,25 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
       setState(() {
         _error = 'Error loading document: ${e.toString()}';
         _isLoading = false;
+=======
+  Future<void> _loadDocument() async {
+    final document = ModalRoute.of(context)!.settings.arguments as Document;
+    
+    try {
+      _pdfController = PdfController(
+        document: PdfDocument.openFile(document.fileUrl!),
+      );
+      setState(() => _isLoading = false);
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Failed to load document';
+>>>>>>> 17955a8 (Updated project)
       });
     }
   }
 
+<<<<<<< HEAD
   Widget _buildPdfViewer() {
     if (_pdfController == null) {
       return const Center(
@@ -710,5 +742,25 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
         ],
       ),
     );
+=======
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Document Viewer')),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(child: Text(_error!))
+              : PdfView(
+                  controller: _pdfController,
+                ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pdfController.dispose();
+    super.dispose();
+>>>>>>> 17955a8 (Updated project)
   }
 }
