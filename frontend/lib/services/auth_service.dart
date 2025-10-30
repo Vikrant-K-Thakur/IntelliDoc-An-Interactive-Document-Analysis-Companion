@@ -65,7 +65,11 @@ class AuthService {
     }
   }
 
+<<<<<<< HEAD
   Future<bool> checkLoginStatus() async {
+=======
+  Future<bool> isLoggedIn() async {
+>>>>>>> 17955a8 (Updated project)
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('isLoggedIn') ?? false;
   }
@@ -74,6 +78,7 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', value);
   }
+<<<<<<< HEAD
 
   // Legacy methods for backward compatibility
   static void login() {
@@ -89,4 +94,6 @@ class AuthService {
     // In production, you should check Firebase auth state
     return true;
   }
+=======
+>>>>>>> 17955a8 (Updated project)
 }

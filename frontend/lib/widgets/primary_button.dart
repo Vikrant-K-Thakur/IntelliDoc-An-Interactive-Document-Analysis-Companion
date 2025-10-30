@@ -7,7 +7,11 @@ class PrimaryButton extends StatelessWidget {
   final double? width;
   final double? height;
   final Color? backgroundColor;
+<<<<<<< HEAD
   final Color? textColor;
+=======
+  final Color? textColor; // New parameter
+>>>>>>> 17955a8 (Updated project)
 
   const PrimaryButton({
     super.key,
@@ -17,7 +21,11 @@ class PrimaryButton extends StatelessWidget {
     this.width,
     this.height,
     this.backgroundColor,
+<<<<<<< HEAD
     this.textColor,
+=======
+    this.textColor, // Added as optional parameter
+>>>>>>> 17955a8 (Updated project)
   });
 
   @override
@@ -40,10 +48,18 @@ class PrimaryButton extends StatelessWidget {
             : Text(
                 text,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
+<<<<<<< HEAD
                       color: textColor,
+=======
+                      color: textColor, // Apply textColor if provided
+>>>>>>> 17955a8 (Updated project)
                     ),
               ),
       ),
     );
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 17955a8 (Updated project)

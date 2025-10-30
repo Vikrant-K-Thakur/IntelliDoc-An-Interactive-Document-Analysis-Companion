@@ -29,6 +29,7 @@ class Validators {
     return null;
   }
 
+<<<<<<< HEAD
   static String? validateUsername(String? value) {
     if (value == null || value.isEmpty) {
       return 'Username is required';
@@ -42,6 +43,8 @@ class Validators {
     return null;
   }
 
+=======
+>>>>>>> 17955a8 (Updated project)
   static String? validateDocumentTitle(String? value) {
     if (value == null || value.isEmpty) {
       return 'Document title is required';
