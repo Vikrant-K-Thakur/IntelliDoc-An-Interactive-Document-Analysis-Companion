@@ -6,6 +6,7 @@ import 'package:docuverse/widgets/app_logo.dart';
 import 'edit_profile.dart';
 import 'settings.dart';
 import 'package:docuverse/services/auth_service.dart';
+import 'package:docuverse/services/collaboration_service.dart';
 import 'package:docuverse/constants/app_constants.dart';
 
 class PersonalSpaceScreen extends StatefulWidget {
@@ -42,6 +43,7 @@ class _PersonalSpaceScreenContentState
     extends State<PersonalSpaceScreenContent> {
   User? get currentUser => FirebaseAuth.instance.currentUser;
   final AuthService _authService = AuthService();
+  final CollaborationService _collaborationService = CollaborationService();
 
   String _getUserInitials(String? displayName) {
     if (displayName == null || displayName.isEmpty) return 'U';
@@ -244,6 +246,36 @@ class _PersonalSpaceScreenContentState
                       'View and manage shared documents',
                       Icons.people_outline,
                       Colors.blue,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/collaboration');
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildMenuItem(
+                      'Friends',
+                      'Manage your friends and chat',
+                      Icons.group,
+                      Colors.blue,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/friends');
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    StreamBuilder(
+                      stream: _collaborationService.getReceivedFriendRequests(),
+                      builder: (context, snapshot) {
+                        final requestCount = snapshot.hasData ? snapshot.data!.length : 0;
+                        return _buildMenuItemWithBadge(
+                          'Notifications',
+                          'Friend requests and updates',
+                          Icons.notifications_outlined,
+                          Colors.blue,
+                          badgeCount: requestCount,
+                          onTap: () {
+                            Navigator.pushNamed(context, '/notifications');
+                          },
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     _buildMenuItem(
@@ -259,6 +291,88 @@ class _PersonalSpaceScreenContentState
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItemWithBadge(
+      String title, String subtitle, IconData icon, Color iconColor,
+      {VoidCallback? onTap, int badgeCount = 0}) {
+    return GestureDetector(
+      onTap: onTap ?? () {},
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Stack(
+              children: [
+                Icon(icon, size: 24, color: iconColor),
+                if (badgeCount > 0)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        badgeCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 20, color: Colors.grey[400]),
           ],
         ),
       ),

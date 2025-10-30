@@ -24,6 +24,7 @@ class IntelliDocApp extends StatelessWidget {
       theme: AppConfig.theme,
       initialRoute: AppConstants.loginRoute,
       routes: AppRoutes.routes,
+      onGenerateRoute: AppRoutes.onGenerateRoute,
       debugShowCheckedModeBanner: false,
     );
   }

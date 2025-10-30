@@ -1,6 +1,6 @@
 // screens/login.dart
 import 'package:flutter/material.dart';
-import 'package:docuverse/services/auth_service.dart';
+import 'package:docuverse/features/auth/services/auth_service.dart';
 import 'package:docuverse/shared/constants/app_constants.dart';
 import 'package:docuverse/utils/validators.dart';
 import 'package:docuverse/widgets/app_logo.dart';

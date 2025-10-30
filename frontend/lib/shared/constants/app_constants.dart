@@ -14,4 +14,7 @@ class AppConstants {
   static const String personalSpaceRoute = '/personal_space';
   static const String aiDocumentRoute = '/ai_document';
   static const String collaborationRoute = '/collaboration';
+  static const String friendsRoute = '/friends';
+  static const String notificationsRoute = '/notifications';
+  static const String chatRoute = '/chat';
 }

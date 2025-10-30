@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:docuverse/services/collaboration_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -11,6 +12,11 @@ class AuthService {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
           email: email, password: password);
+      if (result.user != null) {
+        final collaborationService = CollaborationService();
+        await collaborationService.createUserProfile();
+        await collaborationService.updateUserOnlineStatus(true);
+      }
       return result.user;
     } catch (e) {
       rethrow;
@@ -23,6 +29,11 @@ class AuthService {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
           email: email, password: password);
       await result.user?.updateDisplayName(name);
+      if (result.user != null) {
+        final collaborationService = CollaborationService();
+        await collaborationService.createUserProfile();
+        await collaborationService.updateUserOnlineStatus(true);
+      }
       return result.user;
     } catch (e) {
       rethrow;
@@ -42,6 +53,11 @@ class AuthService {
       );
 
       UserCredential result = await _auth.signInWithCredential(credential);
+      if (result.user != null) {
+        final collaborationService = CollaborationService();
+        await collaborationService.createUserProfile();
+        await collaborationService.updateUserOnlineStatus(true);
+      }
       return result.user;
     } catch (e) {
       rethrow;
@@ -50,6 +66,8 @@ class AuthService {
 
   Future<void> signOut() async {
     try {
+      final collaborationService = CollaborationService();
+      await collaborationService.updateUserOnlineStatus(false);
       await _auth.signOut();
       await _googleSignIn.signOut();
     } catch (e) {

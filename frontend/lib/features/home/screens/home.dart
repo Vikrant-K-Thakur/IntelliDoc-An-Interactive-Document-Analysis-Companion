@@ -211,7 +211,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.notifications_outlined),
-                        onPressed: () {},
+                        onPressed: () => Navigator.pushNamed(context, '/notifications'),
                       ),
                       const SizedBox(width: 8),
                       GestureDetector(

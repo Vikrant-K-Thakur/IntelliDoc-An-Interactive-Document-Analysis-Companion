@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:docuverse/shared/models/folder_model.dart';
 import 'package:docuverse/shared/models/file_model.dart';
 import 'package:docuverse/features/documents/services/file_storage_service.dart';
+import 'package:docuverse/features/collaboration/widgets/share_dialog.dart';
 
 class FileManagementDialog extends StatefulWidget {
   final FileModel file;
@@ -125,8 +126,13 @@ class _FileManagementDialogState extends State<FileManagementDialog> {
             title: const Text('Share Document'),
             onTap: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Share feature coming soon')),
+              showDialog(
+                context: context,
+                builder: (context) => ShareDialog(
+                  fileName: widget.file.name,
+                  fileUrl: widget.file.path,
+                  fileType: widget.file.name.split('.').last,
+                ),
               );
             },
           ),
