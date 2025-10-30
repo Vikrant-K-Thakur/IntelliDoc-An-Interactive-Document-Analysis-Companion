@@ -85,8 +85,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'docuverse-ai-app.firebasestorage.app',
     measurementId: 'G-7VS2E9NCVE',
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 17955a8 (Updated project)

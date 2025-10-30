@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-=======
-// import 'package:docuverse/constants/app_theme.dart';
->>>>>>> 17955a8 (Updated project)
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
