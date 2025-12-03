@@ -1,21 +1,4 @@
-<<<<<<< HEAD
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from app.services.qna_generator import generate_flashcards
 
-router = APIRouter()
-
-class FlashcardRequest(BaseModel):
-    text: str
-
-@router.post("/flashcards/")
-def get_flashcards(data: FlashcardRequest):
-    try:
-        flashcards = generate_flashcards(data.text)
-        return {"flashcards": flashcards}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-=======
 import time
 import logging
 import uuid
@@ -357,4 +340,4 @@ async def generate_flashcards_endpoint(
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
->>>>>>> 17955a8 (Updated project)
+
